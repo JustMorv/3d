@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Editor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Главное меню -->
+<div id="main-menu">
+  <div class="menu-title">🏠 3D Редактор кухни</div>
+  
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('models-accordion')">
+    <span>🎨 3D Модели кухни</span>
+    <span class="arrow">▼</span>
+  </div>
+  <div id="models-accordion" class="accordion-content">
+    <button onclick="window.app.modelLoader.loadModel('basic_kitchen')"><i>🍽️</i> Базовая кухня</button>
+    <button onclick="window.app.modelLoader.loadModel('cabinet')"><i>🗄️</i> Кухонный шкаф</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen')"><i>🏠</i> Кухня</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen1')"><i>🍳</i> Кухня 1</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen_cabinets')"><i>🚪</i> Кухонные шкафы</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen_model_2')"><i>🍴</i> Кухонная модель 2</button>
+    <button onclick="window.app.modelLoader.loadModel('modern_kitchen')"><i>🌟</i> Современная кухня</button>
+    <!-- <button onclick="window.app.modelLoader.loadModel('living_room')"><i>🛋️</i> Гостиная</button> -->
+    <!-- <button onclick="window.app.modelLoader.loadModel('new_kitchen')"><i>🆕</i> Новая кухня</button> -->
+    <!-- <button onclick="window.app.modelLoader.loadModel('pigan')"><i>🐷</i> Пиган кухня</button> -->
+    <!-- <button onclick="window.app.modelLoader.loadModel('pobin')"><i>🏡</i> Побин кухня</button> -->
+  </div>
+  
+ <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')">
+  <span>⚙️ Управление</span>
+  <span class="arrow">▼</span>
+</div>
+<div id="management-accordion" class="accordion-content">
+  <button onclick="window.app.selectionManager.deleteSelected()"><i>🗑️</i> Удалить выбранный</button>
+  <button onclick="window.app.modelManager.clearAllModels()"><i>🔥</i> Удалить все модели</button>
+  <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
+  <button onclick="window.app.selectionManager.enableWidthMode()"><i>📏</i> Изменить ширину</button>
+  <button onclick="window.app.selectionManager.resetObject()"><i>🔄</i> Сбросить объект</button>
+  <button onclick="window.app.selectionManager.alignToFloor()"><i>⬆️</i> Выровнять по полу</button>
+  <button onclick="window.app.modelManager.fixAllModelsHeight()"><i>⬆️⬆️</i> Выровнять все объекты</button>
+  <button onclick="window.app.modelManager.checkAllModelSizes()"><i>📊</i> Проверить размеры</button>
+  <button onclick="window.app.modelManager.normalizeAllModels()"><i>⚖️</i> Нормализовать размеры</button>
+  <button onclick="window.app.modelManager.recenterAllModels()"><i>🎯</i> Центрировать все модели</button>
+  <button onclick="window.app.modelManager.resetAllPositions()"><i>🔄</i> Сбросить позиции</button>
+  
+  <!-- НОВЫЕ КНОПКИ -->
+  <button onclick="window.app.modelManager.forceModelsIntoRoom()"><i>🏠</i> Разместить все в комнате</button>
+  <button onclick="window.app.modelManager.shrinkOversizedModels()"><i>📉</i> Уменьшить большие модели</button>
+</div>
+  
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')">
+    <span>🎯 Коллизии</span>
+    <span class="arrow">▼</span>
+  </div>
+  <div id="collisions-accordion" class="accordion-content">
+    <button onclick="window.app.collisionManager.togglePreciseCollisions()" id="collision-toggle">
+      <i>🎯</i> <span id="collision-status">Точные столкновения: ВКЛ</span>
+    </button>
+    <button onclick="window.app.collisionManager.showColliders()"><i>👁️</i> Показать коллайдеры</button>
+    <button onclick="window.app.collisionManager.hideColliders()"><i>👁️‍🗨️</i> Скрыть коллайдеры</button>
+  </div>
+
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('placement-accordion')">
+  <span>📍 Оптимальное размещение</span>
+  <span class="arrow">▼</span>
+</div>
+<div id="placement-accordion" class="accordion-content">
+  <button onclick="window.app.modelManager.placeSelectedInCenter()"><i>🎯</i> Центрировать выбранное</button>
+  <button onclick="window.app.modelManager.autoArrangeModels()"><i>🔀</i> Авторасстановка всех моделей</button>
+</div>
+</div>
+
+<!-- Контекстное меню -->
+<div id="context-menu">
+  <div class="menu-item" onclick="window.app.selectionManager.scaleObject(1.2)">
+    <i>➕</i> Увеличить на 20%
+  </div>
+  <div class="menu-item" onclick="window.app.selectionManager.scaleObject(0.8)">
+    <i>➖</i> Уменьшить на 20%
+  </div>
+  <div class="divider"></div>
+  <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()">
+    <i>🔄</i> Повернуть объект
+  </div>
+  <div class="menu-item" onclick="window.app.rotationManager.resetRotation()">
+    <i>↩️</i> Сбросить вращение
+  </div>
+  <div class="divider"></div>
+  <div class="menu-item" onclick="window.app.selectionManager.cloneObject()">
+    <i>⎘</i> Дублировать
+  </div>
+
+  <div class="divider"></div>
+  <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #e74c3c;">
+    <i>🗑️</i> Удалить объект
+  </div>
+</div>
+
+<!-- Three.js библиотеки -->
+<script src="https://unpkg.com/three@0.90.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.90.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.90.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/three@0.90.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://unpkg.com/three@0.90.0/examples/js/libs/stats.min.js"></script>
+
+<script>
+  if (location.href.indexOf('localhost') !== -1) {
+    document.write('<script src="http://localhost:3000/dist/three-dragger.umd.js"><\/script>');
+  } else {
+    document.write('<script src="https://unpkg.com/three-dragger"><\/script>');
+  }
+</script>
+
+<!-- Подключаем модули -->
+<script src="modules/Utils/MathHelper.js"></script>
+<script src="modules/Utils/DebugHelper.js"></script>
+<script src="modules/Utils/EventManager.js"></script>
+
+<script src="modules/Core/SceneManager.js"></script>
+<script src="modules/Core/CameraController.js"></script>
+<script src="modules/Core/UIManager.js"></script>
+<script src="modules/Core/App.js"></script>
+
+<script src="modules/Models/ModelLoader.js"></script>
+<script src="modules/Models/ModelManager.js"></script>
+<script src="modules/Models/ModelNormalizer.js"></script>
+
+<script src="modules/Physics/CollisionManager.js"></script>
+<script src="modules/Physics/CollisionHelper.js"></script>
+<script src="modules/Physics/WallManager.js"></script>
+
+<script src="modules/Interactions/DragManager.js"></script>
+<script src="modules/Interactions/SelectionManager.js"></script>
+<script src="modules/Interactions/RotationManager.js"></script>
+<script src="modules/Interactions/ContextMenu.js"></script>
+
+<script src="main.js"></script>
+
+</body>
+</html>
