@@ -15,6 +15,7 @@ const DragManager = {
   dragStartPosition: null,
   isDragging: false,
   hasCollision: false,
+  originalYPosition: 0,
 
   init: function(sceneManager, cameraController, collisionManager, wallManager, selectionManager) {
     this.sceneManager = sceneManager;
@@ -47,168 +48,164 @@ const DragManager = {
     renderer.domElement.addEventListener('mouseup', (e) => this.onMouseUp(e), false);
   },
 
- // В DragManager.js, измените onMouseDown:
-onMouseDown: function(event) {
-  event.preventDefault();
-  
-  if (event.button !== 0) return;
-  
-  this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  
-  this.raycaster.setFromCamera(this.mouse, this.cameraController.camera);
-  
-  if (this.selectionManager.gearIcon && this.selectionManager.gearIcon.style.display !== 'none') {
-    const rect = this.selectionManager.gearIcon.getBoundingClientRect();
-    if (
-      event.clientX >= rect.left &&
-      event.clientX <= rect.right &&
-      event.clientY >= rect.top &&
-      event.clientY <= rect.bottom
-    ) {
-      return;
-    }
-  }
-  
-  const intersects = this.raycaster.intersectObjects(this.sceneManager.objects, true);
-  
-  if (intersects.length > 0) {
-    const intersect = intersects[0];
-    let clickedObject = intersect.object;
+  onMouseDown: function(event) {
+    event.preventDefault();
     
-    while (clickedObject.parent && !this.sceneManager.objects.includes(clickedObject)) {
-      clickedObject = clickedObject.parent;
+    if (event.button !== 0) return;
+    
+    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    this.raycaster.setFromCamera(this.mouse, this.cameraController.camera);
+    
+    if (this.selectionManager.gearIcon && this.selectionManager.gearIcon.style.display !== 'none') {
+      const rect = this.selectionManager.gearIcon.getBoundingClientRect();
+      if (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      ) {
+        return;
+      }
     }
     
-    if (this.selectionManager.selectedObject !== clickedObject) {
-      if (this.selectionManager.selectedObject) {
-        this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, false);
-        this.selectionManager.hideGearIcon();
-        if (window.app.rotationManager) {
-          window.app.rotationManager.hideRotationCircle();
+    const intersects = this.raycaster.intersectObjects(this.sceneManager.objects, true);
+    
+    if (intersects.length > 0) {
+      const intersect = intersects[0];
+      let clickedObject = intersect.object;
+      
+      while (clickedObject.parent && !this.sceneManager.objects.includes(clickedObject)) {
+        clickedObject = clickedObject.parent;
+      }
+      
+      if (this.selectionManager.selectedObject !== clickedObject) {
+        if (this.selectionManager.selectedObject) {
+          this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, false);
+          this.selectionManager.hideGearIcon();
+          if (window.app.rotationManager) {
+            window.app.rotationManager.hideRotationCircle();
+          }
+          this.selectionManager.disableWidthMode();
         }
-        this.selectionManager.disableWidthMode();
+        
+        this.selectionManager.selectObject(clickedObject);
       }
       
-      this.selectionManager.selectObject(clickedObject);
-    }
-    
-    this.isDragging = true;
-    this.cameraController.disable();
-    
-    // НОВОЕ: Сохраняем исходную Y-позицию объекта
-    this.originalYPosition = this.selectionManager.selectedObject.position.y;
-    
-    this.dragStartPosition.copy(this.selectionManager.selectedObject.position);
-    this.dragPlane.setFromNormalAndCoplanarPoint(
-      this.dragNormal,
-      this.selectionManager.selectedObject.position
-    );
-    
-    this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection);
-    this.dragOffset.copy(this.selectionManager.selectedObject.position).sub(this.dragIntersection);
-    
-    this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
-    this.selectionManager.hideGearIcon();
-    
-    if (window.app.rotationManager) {
-      window.app.rotationManager.hideRotationCircle();
-    }
-    
-    this.selectionManager.disableWidthMode();
-  } else {
-    if (this.selectionManager.selectedObject) {
-      this.selectionManager.deselectObject();
-    }
-  }
-},
-
-// ИЗМЕНЕННЫЙ onMouseMove:
-onMouseMove: function(event) {
-  if (!this.isDragging || !this.selectionManager.selectedObject) return;
-  
-  this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  
-  this.raycaster.setFromCamera(this.mouse, this.cameraController.camera);
-  
-  if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
-    const newPosition = this.dragIntersection.clone().add(this.dragOffset);
-    
-    // ВАЖНО: Сохраняем Y-позицию как исходную (не изменяем высоту при движении)
-    newPosition.y = this.originalYPosition;
-    
-    // Проверяем только X и Z коллизии (стены и объекты), НЕ трогаем Y
-    const collisionResult = this.collisionManager.checkCollisionsXZ(newPosition, this.selectionManager.selectedObject);
-    
-    if (collisionResult.hasCollision) {
-      if (!this.hasCollision) {
-        this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xff0000);
-        this.hasCollision = true;
+      this.isDragging = true;
+      this.cameraController.disable();
+      
+      this.originalYPosition = this.selectionManager.selectedObject.position.y;
+      
+      this.dragStartPosition.copy(this.selectionManager.selectedObject.position);
+      this.dragPlane.setFromNormalAndCoplanarPoint(
+        this.dragNormal,
+        this.selectionManager.selectedObject.position
+      );
+      
+      this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection);
+      this.dragOffset.copy(this.selectionManager.selectedObject.position).sub(this.dragIntersection);
+      
+      this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
+      this.selectionManager.hideGearIcon();
+      
+      if (window.app.rotationManager) {
+        window.app.rotationManager.hideRotationCircle();
       }
+      
+      this.selectionManager.disableWidthMode();
     } else {
-      if (this.hasCollision) {
-        this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
-        this.hasCollision = false;
+      if (this.selectionManager.selectedObject) {
+        this.selectionManager.deselectObject();
       }
     }
-    
-    // Применяем только X и Z, Y оставляем исходным
-    this.selectionManager.selectedObject.position.x = collisionResult.position.x;
-    this.selectionManager.selectedObject.position.z = collisionResult.position.z;
-    // Y не трогаем!
-    
-    this.collisionManager.updateAllColliders(this.selectionManager.selectedObject);
-    
-    this.selectionManager.updateGearIconPosition();
-    
-    if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
-      window.app.rotationManager.updateRotationCirclePosition();
-    }
-  }
-},
+  },
 
-onMouseUp: function(event) {
-  if (this.isDragging && this.selectionManager.selectedObject) {
-    // Проверяем, не находится ли объект внутри другого объекта
-    const isInCollision = this.collisionManager.isObjectInCollision(this.selectionManager.selectedObject);
+  onMouseMove: function(event) {
+    if (!this.isDragging || !this.selectionManager.selectedObject) return;
     
-    if (isInCollision) {
-      // Если объект в коллизии, возвращаем его в безопасную позицию
-      const safePosition = this.dragStartPosition.clone();
+    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    this.raycaster.setFromCamera(this.mouse, this.cameraController.camera);
+    
+    if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
+      const newPosition = this.dragIntersection.clone().add(this.dragOffset);
       
-      // Возвращаем исходную позицию (с правильной Y)
-      this.selectionManager.selectedObject.position.copy(safePosition);
+      newPosition.y = this.originalYPosition;
       
-      if (window.app.uiManager) {
-        window.app.uiManager.showNotification('Невозможно разместить объект внутри другого!', 'warning', 2000);
+      const collisionResult = this.collisionManager.checkCollisionsXZ(newPosition, this.selectionManager.selectedObject);
+      
+      if (collisionResult.hasCollision) {
+        if (!this.hasCollision) {
+          this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xff0000);
+          this.hasCollision = true;
+        }
+      } else {
+        if (this.hasCollision) {
+          this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
+          this.hasCollision = false;
+        }
       }
       
-      DebugHelper.log('Объект возвращен в безопасную позицию из-за коллизии');
-    } else {
-      // Убеждаемся, что объект стоит на полу
-      const box = new THREE.Box3().setFromObject(this.selectionManager.selectedObject);
-      const minY = box.min.y;
-      const floorLevel = this.sceneManager.floorLevel;
+      this.selectionManager.selectedObject.position.x = collisionResult.position.x;
+      this.selectionManager.selectedObject.position.z = collisionResult.position.z;
       
-      if (Math.abs(minY - floorLevel) > 1) {
-        const correction = floorLevel - minY;
-        this.selectionManager.selectedObject.position.y += correction;
-        DebugHelper.log('Объект выровнен по полу, коррекция:', correction);
+      this.collisionManager.updateAllColliders(this.selectionManager.selectedObject);
+      
+      this.selectionManager.updateGearIconPosition();
+      
+      if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
+        window.app.rotationManager.updateRotationCirclePosition();
+      }
+      
+      if (window.app.modelManager && window.app.modelManager.isShowingAllSizes) {
+        window.app.modelManager.updateAllModelsSizeLines();
+      }
+    }
+  },
+
+  onMouseUp: function(event) {
+    if (this.isDragging && this.selectionManager.selectedObject) {
+      const isInCollision = this.collisionManager.isObjectInCollision(this.selectionManager.selectedObject);
+      
+      if (isInCollision) {
+        const safePosition = this.dragStartPosition.clone();
+        this.selectionManager.selectedObject.position.copy(safePosition);
+        
+        if (window.app.uiManager) {
+          window.app.uiManager.showNotification('Невозможно разместить объект внутри другого!', 'warning', 2000);
+        }
+        
+        DebugHelper.log('Объект возвращен в безопасную позицию из-за коллизии');
+      } else {
+        const box = new THREE.Box3().setFromObject(this.selectionManager.selectedObject);
+        const minY = box.min.y;
+        const floorLevel = this.sceneManager.floorLevel;
+        
+        if (Math.abs(minY - floorLevel) > 1) {
+          const correction = floorLevel - minY;
+          this.selectionManager.selectedObject.position.y += correction;
+          DebugHelper.log('Объект выровнен по полу, коррекция:', correction);
+        }
+      }
+      
+      this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true);
+      this.hasCollision = false;
+      this.selectionManager.updateGearIconPosition();
+      this.selectionManager.showGearIcon();
+      
+      if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
+        window.app.rotationManager.showRotationCircle();
+      }
+      
+      if (window.app.modelManager && window.app.modelManager.isShowingAllSizes) {
+        window.app.modelManager.updateAllModelsSizeLines();
       }
     }
     
-    this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true);
-    this.hasCollision = false;
-    this.selectionManager.updateGearIconPosition();
-    this.selectionManager.showGearIcon();
-    
-    if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
-      window.app.rotationManager.showRotationCircle();
-    }
+    this.isDragging = false;
+    this.cameraController.enable();
   }
-  
-  this.isDragging = false;
-  this.cameraController.enable();
-},
 };

@@ -79,24 +79,17 @@
   <span class="arrow">▼</span>
 </div>
 <div id="info-accordion" class="accordion-content">
-  <button onclick="window.app.modelManager.showAllModelsSizes()">
-    <i>📏</i> Показать размеры всех моделей
+  <button id="toggle-all-sizes-btn" onclick="window.app.modelManager.toggleAllModelsSizes()">
+    <i>📏</i> <span id="sizes-toggle-text">Показать размеры всех моделей</span>
   </button>
   <button onclick="window.app.modelManager.showRoomInfo()">
     <i>🏠</i> Информация о комнате
   </button>
-  <button onclick="window.app.modelManager.showSelectedModelSize()">
-    <i>🎯</i> Размер выбранной модели
-  </button>
 </div>
 </div>
 
-<!-- Контекстное меню (обновленное - убрали изменение размеров) -->
+<!-- Контекстное меню -->
 <div id="context-menu">
-  <div class="menu-item" onclick="window.app.selectionManager.showSizeLines()">
-    <i>📏</i> Показать размеры
-  </div>
-  <div class="divider"></div>
   <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()">
     <i>🔄</i> Повернуть объект
   </div>

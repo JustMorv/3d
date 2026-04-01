@@ -563,27 +563,30 @@ const SelectionManager = {
     }
   },
 
-  changeObjectWidth: function(newWidth) {
-    if (!this.selectedObject || !this.originalWidth) return;
-    
-    const widthScaleFactor = newWidth / this.originalWidth;
-    const originalScale = this.selectedObject.userData.originalScale || 1;
-    
-    if (this.selectedObject.userData.type === 'model') {
-      const newScale = originalScale * (newWidth / this.selectedObject.userData.originalWidth);
-      this.selectedObject.scale.setScalar(newScale);
-    } else {
-      this.selectedObject.scale.x = widthScaleFactor;
-    }
-    
-    this.collisionManager.updateAllColliders(this.selectedObject);
-    this.selectedObject.userData.originalWidth = newWidth;
-    
-    if (this.isSizeLinesVisible) {
-      this.updateSizeLinesPosition();
-    }
-  },
-
+ changeObjectWidth: function(newWidth) {
+  if (!this.selectedObject || !this.originalWidth) return;
+  
+  const widthScaleFactor = newWidth / this.originalWidth;
+  const originalScale = this.selectedObject.userData.originalScale || 1;
+  
+  if (this.selectedObject.userData.type === 'model') {
+    const newScale = originalScale * (newWidth / this.selectedObject.userData.originalWidth);
+    this.selectedObject.scale.setScalar(newScale);
+  } else {
+    this.selectedObject.scale.x = widthScaleFactor;
+  }
+  
+  this.collisionManager.updateAllColliders(this.selectedObject);
+  this.selectedObject.userData.originalWidth = newWidth;
+  
+  if (this.isSizeLinesVisible) {
+    this.updateSizeLinesPosition();
+  }
+  
+  if (window.app.modelManager && window.app.modelManager.isShowingAllSizes) {
+    window.app.modelManager.updateAllModelsSizeLines();
+  }
+},
   resetWidth: function() {
     if (this.widthSlider) {
       this.widthSlider.value = 100;

@@ -137,6 +137,7 @@ const ModelLoader = {
       DebugHelper.log('Дополнительная коррекция высоты:', -finalBox.minY);
     }
 
+
     // Настройка материалов
     modelGroup.traverse((child) => {
       if (child.isMesh) {
@@ -181,6 +182,9 @@ const ModelLoader = {
     // Обновляем коллайдеры
     if (window.app && window.app.collisionManager) {
       window.app.collisionManager.updateObjectHalfSize(modelGroup);
+    }
+    if (window.app.modelManager && window.app.modelManager.isShowingAllSizes) {
+      window.app.modelManager.createSizeLinesForModel(modelGroup);
     }
 
     // Проверяем столкновения
