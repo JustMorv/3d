@@ -72,15 +72,29 @@
   <button onclick="window.app.modelManager.placeSelectedInCenter()"><i>🎯</i> Центрировать выбранное</button>
   <button onclick="window.app.modelManager.autoArrangeModels()"><i>🔀</i> Авторасстановка всех моделей</button>
 </div>
+
+<!-- НОВАЯ СЕКЦИЯ: ИНФОРМАЦИЯ -->
+<div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')">
+  <span>📊 Информация</span>
+  <span class="arrow">▼</span>
+</div>
+<div id="info-accordion" class="accordion-content">
+  <button onclick="window.app.modelManager.showAllModelsSizes()">
+    <i>📏</i> Показать размеры всех моделей
+  </button>
+  <button onclick="window.app.modelManager.showRoomInfo()">
+    <i>🏠</i> Информация о комнате
+  </button>
+  <button onclick="window.app.modelManager.showSelectedModelSize()">
+    <i>🎯</i> Размер выбранной модели
+  </button>
+</div>
 </div>
 
-<!-- Контекстное меню -->
+<!-- Контекстное меню (обновленное - убрали изменение размеров) -->
 <div id="context-menu">
-  <div class="menu-item" onclick="window.app.selectionManager.scaleObject(1.2)">
-    <i>➕</i> Увеличить на 20%
-  </div>
-  <div class="menu-item" onclick="window.app.selectionManager.scaleObject(0.8)">
-    <i>➖</i> Уменьшить на 20%
+  <div class="menu-item" onclick="window.app.selectionManager.showSizeLines()">
+    <i>📏</i> Показать размеры
   </div>
   <div class="divider"></div>
   <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()">
@@ -93,7 +107,6 @@
   <div class="menu-item" onclick="window.app.selectionManager.cloneObject()">
     <i>⎘</i> Дублировать
   </div>
-
   <div class="divider"></div>
   <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #e74c3c;">
     <i>🗑️</i> Удалить объект

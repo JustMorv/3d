@@ -127,13 +127,11 @@ const CollisionManager = {
     }
   },
 
-  // НОВЫЙ МЕТОД: проверка коллизий только по X и Z
   checkCollisionsXZ: function(position, movingObject) {
     const result = { position: position.clone(), hasCollision: false };
     
     const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
     
-    // Проверка стен только по X и Z
     const wallCollision = this.collisionHelper.checkWallCollisionXZ(
       result.position, 
       movingHalfSize,
@@ -148,7 +146,6 @@ const CollisionManager = {
       result.hasCollision = true;
     }
     
-    // Проверка объектов только по X и Z
     const objectCollision = this.collisionHelper.checkObjectCollisionsXZ(
       result.position, 
       movingObject, 
@@ -180,10 +177,6 @@ const CollisionManager = {
     
     if (bottomY < floorLevel) {
       result.y = floorLevel + halfSize.y;
-      DebugHelper.log('Объект поднят на пол:', {
-        oldBottom: bottomY,
-        newBottom: result.y - halfSize.y
-      });
     }
     
     return result;

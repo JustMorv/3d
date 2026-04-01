@@ -1,4 +1,3 @@
-// example\modules\Models\ModelManager.js
 const ModelManager = {
   sceneManager: null,
   modelNormalizer: null,
@@ -14,6 +13,8 @@ const ModelManager = {
       EventManager.emit('models-cleared');
     }
   },
+
+  
 
   fixAllModelsHeight: function() {
     this.sceneManager.objects.forEach((obj) => {
@@ -239,5 +240,94 @@ const ModelManager = {
     if (window.app && window.app.uiManager) {
       window.app.uiManager.showNotification('Слишком большие модели уменьшены', 'success');
     }
+  },
+
+ // Добавьте в ModelManager.js:
+  showAllModelsSizes: function() {
+    DebugHelper.log('=== РАЗМЕРЫ ВСЕХ МОДЕЛЕЙ ===');
+    
+    let message = '<div style="max-height: 400px; overflow-y: auto;">';
+    message += '<h3 style="margin: 0 0 10px 0;">📊 Размеры всех моделей:</h3>';
+    
+    let modelCount = 0;
+    this.sceneManager.objects.forEach((obj, index) => {
+      if (obj.userData.type === 'model') {
+        const box = new THREE.Box3().setFromObject(obj);
+        const size = box.getSize(new THREE.Vector3());
+        const position = obj.position;
+        
+        const name = obj.userData.name || `Модель ${index + 1}`;
+        
+        message += `
+          <div style="border-bottom: 1px solid #ddd; padding: 8px 0; font-family: monospace; font-size: 12px;">
+            <strong>${name}</strong><br>
+            📐 Ширина: ${size.x.toFixed(1)} | Высота: ${size.y.toFixed(1)} | Глубина: ${size.z.toFixed(1)}<br>
+            📍 Позиция: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})
+          </div>
+        `;
+        
+        console.log(`${index + 1}. ${name}: ${size.x.toFixed(1)} x ${size.y.toFixed(1)} x ${size.z.toFixed(1)}`);
+        modelCount++;
+      }
+    });
+    
+    if (modelCount === 0) {
+      message += '<div style="padding: 20px; text-align: center; color: #999;">Нет загруженных моделей</div>';
+    }
+    
+    message += '</div>';
+    
+    if (window.app && window.app.uiManager) {
+      window.app.uiManager.showNotification(message, 'info', 8000);
+    }
+    
+    DebugHelper.log(`Всего моделей: ${modelCount}`);
+    DebugHelper.log('====================================');
+  },
+  
+ showRoomInfo: function() {
+    const roomW = this.sceneManager.roomW;
+    const roomH = this.sceneManager.roomH;
+    const roomD = this.sceneManager.roomD;
+    
+    const message = `
+      🏠 <strong>Информация о комнате</strong><br>
+      ─────────────────<br>
+      📐 Ширина (X): ${roomW} ед.<br>
+      📏 Высота (Y): ${roomH} ед.<br>
+      📐 Глубина (Z): ${roomD} ед.<br>
+      ─────────────────<br>
+      📍 Уровень пола: ${this.sceneManager.floorLevel}
+    `;
+    
+    if (window.app && window.app.uiManager) {
+      window.app.uiManager.showNotification(message, 'info', 5000);
+    }
+  },
+  
+  // Показать размеры выбранного объекта (для кнопки в меню)
+  showSelectedModelSize: function() {
+    if (window.app.selectionManager && window.app.selectionManager.selectedObject) {
+      const object = window.app.selectionManager.selectedObject;
+      const box = new THREE.Box3().setFromObject(object);
+      const size = box.getSize(new THREE.Vector3());
+      
+      const message = `
+        📊 <strong>${object.userData.name || 'Выбранная модель'}</strong><br>
+        ─────────────────<br>
+        📐 Ширина (X): ${size.x.toFixed(1)} ед.<br>
+        📏 Высота (Y): ${size.y.toFixed(1)} ед.<br>
+        📐 Глубина (Z): ${size.z.toFixed(1)} ед.
+      `;
+      
+      if (window.app.uiManager) {
+        window.app.uiManager.showNotification(message, 'info', 4000);
+      }
+    } else {
+      if (window.app.uiManager) {
+        window.app.uiManager.showNotification('Сначала выберите объект (кликните по нему)', 'warning');
+      }
+    }
   }
+  
 };

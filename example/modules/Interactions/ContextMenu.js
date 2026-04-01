@@ -1,8 +1,12 @@
 const ContextMenu = {
   contextMenu: null,
+  selectionManager: null,
+  rotationManager: null,
 
   init: function(selectionManager, rotationManager) {
     this.contextMenu = document.getElementById('context-menu');
+    this.selectionManager = selectionManager;
+    this.rotationManager = rotationManager;
     this.bindEvents();
   },
 

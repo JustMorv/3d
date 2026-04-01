@@ -1,4 +1,3 @@
-// example\modules\Models\ModelLoader.js
 const ModelLoader = {
   sceneManager: null,
   loaders: {
@@ -19,7 +18,7 @@ const ModelLoader = {
     'kitchen2': 'Kitchen2.glb',
     'kitchen_cabinets': 'kitchen_cabinets.glb',
     'kitchen_set': 'kitchen_design_set_v.001.glb',
-    'kitchen_model_2': 'kitchen_model_2.glb',
+    'kitchen_model_2': 'kitchen_model_22.glb',
     'modern_kitchen': 'modern_kitchen.glb',
     'living_room': 'LivingRoom.glb',
     'new_kitchen': 'newchiken22.glb',
