@@ -14,7 +14,7 @@ const ModelLoader = {
     'basic_kitchen': 'basic_kitchen_cabinets_and_counter.glb',
     'cabinet': 'cabinet.glb',
     'hallway': 'Hallway7.glb',
-    'kitchen': 'kitchen.glb',
+    'kitchen': 'jcjc.glb',
     'kitchen1': 'kitchen1.glb',
     'kitchen2': 'Kitchen2.glb',
     'kitchen_cabinets': 'kitchen_cabinets.glb',
@@ -22,7 +22,7 @@ const ModelLoader = {
     'kitchen_model_2': 'kitchen_model_2.glb',
     'modern_kitchen': 'modern_kitchen.glb',
     'living_room': 'LivingRoom.glb',
-    'new_kitchen': 'newchiken.glb',
+    'new_kitchen': 'newchiken22.glb',
     'pigan': 'pigan.glb',
     'pobin': 'pobinByLing.glb'
   },

@@ -169,6 +169,40 @@ const CollisionHelper = {
     return result;
   },
 
+  // НОВЫЙ МЕТОД: проверка стен только по X и Z (без изменения Y)
+  checkWallCollisionXZ: function(position, halfSize, roomW, roomD, wallOffsetMargin) {
+    const result = { position: position.clone(), hasCollision: false };
+    
+    const minX = -roomW/2 + halfSize.x + wallOffsetMargin;
+    const maxX = roomW/2 - halfSize.x - wallOffsetMargin;
+    const minZ = -roomD/2 + halfSize.z + wallOffsetMargin;
+    const maxZ = roomD/2 - halfSize.z - wallOffsetMargin;
+    
+    let hasWallCollision = false;
+    
+    if (result.position.x < minX) {
+      result.position.x = minX;
+      hasWallCollision = true;
+    }
+    if (result.position.x > maxX) {
+      result.position.x = maxX;
+      hasWallCollision = true;
+    }
+    if (result.position.z < minZ) {
+      result.position.z = minZ;
+      hasWallCollision = true;
+    }
+    if (result.position.z > maxZ) {
+      result.position.z = maxZ;
+      hasWallCollision = true;
+    }
+    
+    result.hasCollision = hasWallCollision;
+    // Y не меняем
+    
+    return result;
+  },
+
   checkObjectCollisions: function(position, movingObject, movingHalfSize, objects, collisionManager) {
     const result = { position: position.clone(), hasCollision: false };
     
@@ -242,6 +276,49 @@ const CollisionHelper = {
           
           return result;
         }
+      }
+    }
+    
+    return result;
+  },
+
+  // НОВЫЙ МЕТОД: проверка объектов только по X и Z (без изменения Y)
+  checkObjectCollisionsXZ: function(position, movingObject, movingHalfSize, objects, collisionManager) {
+    const result = { position: position.clone(), hasCollision: false };
+    
+    for (let i = 0; i < objects.length; i++) {
+      const otherObject = objects[i];
+      if (otherObject === movingObject) continue;
+      
+      const otherHalfSize = otherObject.userData.combinedHalfSize || otherObject.userData.halfSize;
+      if (!otherHalfSize) continue;
+      
+      const dx = Math.abs(result.position.x - otherObject.position.x);
+      const dz = Math.abs(result.position.z - otherObject.position.z);
+      const minDistanceX = movingHalfSize.x + otherHalfSize.x + collisionManager.collisionMargin;
+      const minDistanceZ = movingHalfSize.z + otherHalfSize.z + collisionManager.collisionMargin;
+      
+      if (dx < minDistanceX && dz < minDistanceZ) {
+        const overlapX = minDistanceX - dx;
+        const overlapZ = minDistanceZ - dz;
+        
+        if (overlapX < overlapZ) {
+          if (result.position.x < otherObject.position.x) {
+            result.position.x = otherObject.position.x - minDistanceX;
+          } else {
+            result.position.x = otherObject.position.x + minDistanceX;
+          }
+        } else {
+          if (result.position.z < otherObject.position.z) {
+            result.position.z = otherObject.position.z - minDistanceZ;
+          } else {
+            result.position.z = otherObject.position.z + minDistanceZ;
+          }
+        }
+        
+        result.hasCollision = true;
+        // Y не меняем
+        return result;
       }
     }
     

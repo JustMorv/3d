@@ -127,6 +127,146 @@ const CollisionManager = {
     }
   },
 
+  // НОВЫЙ МЕТОД: проверка коллизий только по X и Z
+  checkCollisionsXZ: function(position, movingObject) {
+    const result = { position: position.clone(), hasCollision: false };
+    
+    const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
+    
+    // Проверка стен только по X и Z
+    const wallCollision = this.collisionHelper.checkWallCollisionXZ(
+      result.position, 
+      movingHalfSize,
+      this.sceneManager.roomW,
+      this.sceneManager.roomD,
+      this.wallOffsetMargin
+    );
+    
+    if (wallCollision.hasCollision) {
+      result.position.x = wallCollision.position.x;
+      result.position.z = wallCollision.position.z;
+      result.hasCollision = true;
+    }
+    
+    // Проверка объектов только по X и Z
+    const objectCollision = this.collisionHelper.checkObjectCollisionsXZ(
+      result.position, 
+      movingObject, 
+      movingHalfSize,
+      this.sceneManager.objects,
+      this
+    );
+    
+    if (objectCollision.hasCollision) {
+      result.position.x = objectCollision.position.x;
+      result.position.z = objectCollision.position.z;
+      result.hasCollision = true;
+    }
+    
+    return result;
+  },
+
+  checkFloorCollision: function(position, object) {
+    const result = position.clone();
+    
+    if (!object || !object.userData.halfSize) {
+      return result;
+    }
+    
+    const halfSize = object.userData.combinedHalfSize || object.userData.halfSize;
+    const floorLevel = this.sceneManager.floorLevel;
+    
+    const bottomY = result.y - halfSize.y;
+    
+    if (bottomY < floorLevel) {
+      result.y = floorLevel + halfSize.y;
+      DebugHelper.log('Объект поднят на пол:', {
+        oldBottom: bottomY,
+        newBottom: result.y - halfSize.y
+      });
+    }
+    
+    return result;
+  },
+
+  isObjectInCollision: function(object) {
+    if (!object || !object.userData.halfSize) return false;
+    
+    const halfSize = object.userData.combinedHalfSize || object.userData.halfSize;
+    const position = object.position.clone();
+    
+    const wallCheck = this.collisionHelper.checkWallCollision(
+      position,
+      halfSize,
+      this.sceneManager.roomW,
+      this.sceneManager.roomD,
+      this.wallOffsetMargin
+    );
+    
+    if (wallCheck.hasCollision) {
+      return true;
+    }
+    
+    for (let i = 0; i < this.sceneManager.objects.length; i++) {
+      const otherObject = this.sceneManager.objects[i];
+      if (otherObject === object) continue;
+      
+      const otherHalfSize = otherObject.userData.combinedHalfSize || otherObject.userData.halfSize;
+      if (!otherHalfSize) continue;
+      
+      const dx = Math.abs(position.x - otherObject.position.x);
+      const dz = Math.abs(position.z - otherObject.position.z);
+      const minDistanceX = halfSize.x + otherHalfSize.x + this.collisionMargin;
+      const minDistanceZ = halfSize.z + otherHalfSize.z + this.collisionMargin;
+      
+      if (dx < minDistanceX && dz < minDistanceZ) {
+        return true;
+      }
+    }
+    
+    return false;
+  },
+
+  checkAllCollisions: function(position, movingObject) {
+    const result = { position: position.clone(), hasCollision: false };
+    
+    const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
+    
+    const wallCollision = this.collisionHelper.checkWallCollision(
+      result.position, 
+      movingHalfSize,
+      this.sceneManager.roomW,
+      this.sceneManager.roomD,
+      this.wallOffsetMargin
+    );
+    
+    if (wallCollision.hasCollision) {
+      result.position = wallCollision.position;
+      result.hasCollision = true;
+    }
+    
+    const objectCollision = this.collisionHelper.checkObjectCollisions(
+      result.position, 
+      movingObject, 
+      movingHalfSize,
+      this.sceneManager.objects,
+      this
+    );
+    
+    if (objectCollision.hasCollision) {
+      result.position = objectCollision.position;
+      result.hasCollision = true;
+    }
+    
+    const floorCheck = this.checkFloorCollision(result.position, movingObject);
+    if (floorCheck.y !== result.position.y) {
+      result.position = floorCheck;
+      result.hasCollision = true;
+    }
+    
+    return result;
+  },
+
   visualizeColliders: function(object) {
     if (!object.userData.colliders || object.userData.colliders.length === 0) return;
     
@@ -164,40 +304,6 @@ const CollisionManager = {
       this.sceneManager.scene.add(mesh);
       object.userData.debugColliderMeshes.push(mesh);
     });
-  },
-
-  checkAllCollisions: function(position, movingObject) {
-    const result = { position: position.clone(), hasCollision: false };
-    
-    const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
-    
-    const wallCollision = this.collisionHelper.checkWallCollision(
-      result.position, 
-      movingHalfSize,
-      this.sceneManager.roomW,
-      this.sceneManager.roomD,
-      this.wallOffsetMargin
-    );
-    
-    if (wallCollision.hasCollision) {
-      result.position = wallCollision.position;
-      result.hasCollision = true;
-    }
-    
-    const objectCollision = this.collisionHelper.checkObjectCollisions(
-      result.position, 
-      movingObject, 
-      movingHalfSize,
-      this.sceneManager.objects,
-      this
-    );
-    
-    if (objectCollision.hasCollision) {
-      result.position = objectCollision.position;
-      result.hasCollision = true;
-    }
-    
-    return result;
   },
 
   checkInitialCollisions: function(newObject) {
