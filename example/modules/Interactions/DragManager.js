@@ -131,29 +131,81 @@ const DragManager = {
     this.raycaster.setFromCamera(this.mouse, this.cameraController.camera);
     
     if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
-      const newPosition = this.dragIntersection.clone().add(this.dragOffset);
-      
+      let newPosition = this.dragIntersection.clone().add(this.dragOffset);
       newPosition.y = this.originalYPosition;
       
-      const collisionResult = this.collisionManager.checkCollisionsXZ(newPosition, this.selectionManager.selectedObject);
+      // ========== ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА СТЕН ==========
+      const halfSize = this.selectionManager.selectedObject.userData.combinedHalfSize || 
+                       this.selectionManager.selectedObject.userData.halfSize;
       
-      if (collisionResult.hasCollision) {
-        if (!this.hasCollision) {
-          this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xff0000);
-          this.hasCollision = true;
+      if (halfSize) {
+        const roomW = this.sceneManager.roomW;
+        const roomD = this.sceneManager.roomD;
+        const FIXED_WALL_GAP = 5;
+        
+        // Вычисляем границы
+        const minX = -roomW/2 + halfSize.x + FIXED_WALL_GAP;
+        const maxX = roomW/2 - halfSize.x - FIXED_WALL_GAP;
+        const minZ = -roomD/2 + halfSize.z + FIXED_WALL_GAP;
+        const maxZ = roomD/2 - halfSize.z - FIXED_WALL_GAP;
+        
+        // Принудительное ограничение (САМОЕ ВАЖНОЕ!)
+        let hasCollision = false;
+        
+        if (newPosition.x < minX) {
+          newPosition.x = minX;
+          hasCollision = true;
+        }
+        if (newPosition.x > maxX) {
+          newPosition.x = maxX;
+          hasCollision = true;
+        }
+        if (newPosition.z < minZ) {
+          newPosition.z = minZ;
+          hasCollision = true;
+        }
+        if (newPosition.z > maxZ) {
+          newPosition.z = maxZ;
+          hasCollision = true;
+        }
+        
+        // Обновляем подсветку
+        if (hasCollision) {
+          if (!this.hasCollision) {
+            this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xff0000);
+            this.hasCollision = true;
+          }
+        } else {
+          if (this.hasCollision) {
+            this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
+            this.hasCollision = false;
+          }
+        }
+        
+        // Применяем позицию
+        this.selectionManager.selectedObject.position.x = newPosition.x;
+        this.selectionManager.selectedObject.position.z = newPosition.z;
+        
+        // Отладка
+        if (hasCollision) {
+          console.log('WALL COLLISION!', {
+            pos: { x: newPosition.x.toFixed(1), z: newPosition.z.toFixed(1) },
+            bounds: { minX: minX.toFixed(1), maxX: maxX.toFixed(1), minZ: minZ.toFixed(1), maxZ: maxZ.toFixed(1) },
+            halfSize: { x: halfSize.x.toFixed(1), z: halfSize.z.toFixed(1) }
+          });
         }
       } else {
-        if (this.hasCollision) {
-          this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0x00ff00);
-          this.hasCollision = false;
-        }
+        // Если нет halfSize - просто перемещаем
+        this.selectionManager.selectedObject.position.x = newPosition.x;
+        this.selectionManager.selectedObject.position.z = newPosition.z;
       }
       
-      this.selectionManager.selectedObject.position.x = collisionResult.position.x;
-      this.selectionManager.selectedObject.position.z = collisionResult.position.z;
+      // Обновляем коллайдеры
+      if (this.collisionManager) {
+        this.collisionManager.updateAllColliders(this.selectionManager.selectedObject);
+      }
       
-      this.collisionManager.updateAllColliders(this.selectionManager.selectedObject);
-      
+      // Обновляем визуальные элементы
       this.selectionManager.updateGearIconPosition();
       
       if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {

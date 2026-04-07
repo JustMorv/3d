@@ -169,39 +169,57 @@ const CollisionHelper = {
     return result;
   },
 
-  // НОВЫЙ МЕТОД: проверка стен только по X и Z (без изменения Y)
-  checkWallCollisionXZ: function(position, halfSize, roomW, roomD, wallOffsetMargin) {
-    const result = { position: position.clone(), hasCollision: false };
-    
-    const minX = -roomW/2 + halfSize.x + wallOffsetMargin;
-    const maxX = roomW/2 - halfSize.x - wallOffsetMargin;
-    const minZ = -roomD/2 + halfSize.z + wallOffsetMargin;
-    const maxZ = roomD/2 - halfSize.z - wallOffsetMargin;
-    
-    let hasWallCollision = false;
-    
-    if (result.position.x < minX) {
-      result.position.x = minX;
-      hasWallCollision = true;
-    }
-    if (result.position.x > maxX) {
-      result.position.x = maxX;
-      hasWallCollision = true;
-    }
-    if (result.position.z < minZ) {
-      result.position.z = minZ;
-      hasWallCollision = true;
-    }
-    if (result.position.z > maxZ) {
-      result.position.z = maxZ;
-      hasWallCollision = true;
-    }
-    
-    result.hasCollision = hasWallCollision;
-    // Y не меняем
-    
+checkWallCollisionXZ: function(position, halfSize, roomW, roomD, wallOffsetMargin) {
+  const result = { position: position.clone(), hasCollision: false };
+  
+  if (!halfSize) {
+    console.error('halfSize is null!');
     return result;
-  },
+  }
+  
+  const FIXED_WALL_GAP = 5;
+  
+  const minX = -roomW/2 + halfSize.x + FIXED_WALL_GAP;
+  const maxX = roomW/2 - halfSize.x - FIXED_WALL_GAP;
+  const minZ = -roomD/2 + halfSize.z + FIXED_WALL_GAP;
+  const maxZ = roomD/2 - halfSize.z - FIXED_WALL_GAP;
+  
+  // ОТЛАДКА - выводим реальные границы модели
+  if (Math.abs(result.position.x - minX) < 20 || Math.abs(result.position.x - maxX) < 20) {
+    console.log('=== ОТЛАДКА КОЛЛИЗИЙ ===');
+    console.log('Позиция модели X:', result.position.x);
+    console.log('Половина ширины модели:', halfSize.x);
+    console.log('Левая граница (стена + halfSize):', minX);
+    console.log('Правая граница:', maxX);
+    console.log('Реальный левый край модели:', result.position.x - halfSize.x);
+    console.log('Реальный правый край модели:', result.position.x + halfSize.x);
+    console.log('Стена слева:', -roomW/2);
+    console.log('Стена справа:', roomW/2);
+  }
+  
+  if (result.position.x < minX) {
+    result.position.x = minX;
+    result.hasCollision = true;
+    console.log('!!! КОЛЛИЗИЯ С ЛЕВОЙ СТЕНОЙ !!!');
+  }
+  if (result.position.x > maxX) {
+    result.position.x = maxX;
+    result.hasCollision = true;
+    console.log('!!! КОЛЛИЗИЯ С ПРАВОЙ СТЕНОЙ !!!');
+  }
+  if (result.position.z < minZ) {
+    result.position.z = minZ;
+    result.hasCollision = true;
+    console.log('!!! КОЛЛИЗИЯ С ЗАДНЕЙ СТЕНОЙ !!!');
+  }
+  if (result.position.z > maxZ) {
+    result.position.z = maxZ;
+    result.hasCollision = true;
+    console.log('!!! КОЛЛИЗИЯ С ПЕРЕДНЕЙ СТЕНОЙ !!!');
+  }
+  
+  return result;
+},
 
   checkObjectCollisions: function(position, movingObject, movingHalfSize, objects, collisionManager) {
     const result = { position: position.clone(), hasCollision: false };
@@ -282,7 +300,6 @@ const CollisionHelper = {
     return result;
   },
 
-  // НОВЫЙ МЕТОД: проверка объектов только по X и Z (без изменения Y)
   checkObjectCollisionsXZ: function(position, movingObject, movingHalfSize, objects, collisionManager) {
     const result = { position: position.clone(), hasCollision: false };
     
@@ -317,7 +334,6 @@ const CollisionHelper = {
         }
         
         result.hasCollision = true;
-        // Y не меняем
         return result;
       }
     }

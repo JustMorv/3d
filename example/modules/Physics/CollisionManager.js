@@ -1,13 +1,15 @@
 const CollisionManager = {
-  sceneManager: null,
+ sceneManager: null,
   collisionHelper: null,
   
-  collisionMargin: 15,
-  wallOffsetMargin: 15,
-  wallSnapDistance: 20,
+  collisionMargin: 0,
+  wallOffsetMargin: 0,
+  wallSnapDistance: 30,
   
   enablePreciseCollisions: true,
   showDebugColliders: false,
+  collisionsEnabled: true, // ДОЛЖНО БЫТЬ true
+  
   
   complexShapes: {},
 
@@ -15,6 +17,15 @@ const CollisionManager = {
     this.sceneManager = sceneManager;
     this.collisionHelper = CollisionHelper;
     this.collisionHelper.init(this);
+  },
+
+  toggleCollisions: function() {
+    this.collisionsEnabled = !this.collisionsEnabled;
+    DebugHelper.log('Коллизии:', this.collisionsEnabled ? 'ВКЛ' : 'ВЫКЛ');
+    if (window.app && window.app.uiManager) {
+      window.app.uiManager.showNotification(`Коллизии ${this.collisionsEnabled ? 'ВКЛЮЧЕНЫ' : 'ВЫКЛЮЧЕНЫ'}`, 'info', 2000);
+    }
+    return this.collisionsEnabled;
   },
 
   togglePreciseCollisions: function() {
@@ -127,42 +138,51 @@ const CollisionManager = {
     }
   },
 
-  checkCollisionsXZ: function(position, movingObject) {
-    const result = { position: position.clone(), hasCollision: false };
-    
-    const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
-    
-    const wallCollision = this.collisionHelper.checkWallCollisionXZ(
-      result.position, 
-      movingHalfSize,
-      this.sceneManager.roomW,
-      this.sceneManager.roomD,
-      this.wallOffsetMargin
-    );
-    
-    if (wallCollision.hasCollision) {
-      result.position.x = wallCollision.position.x;
-      result.position.z = wallCollision.position.z;
-      result.hasCollision = true;
-    }
-    
+checkCollisionsXZ: function(position, movingObject) {
+  if (!this.collisionsEnabled) {
+    return { position: position.clone(), hasCollision: false };
+  }
+  
+  const result = { position: position.clone(), hasCollision: false };
+  
+  // Получаем halfSize модели
+  const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize;
+  
+  if (!movingHalfSize) {
+    DebugHelper.warn('Нет halfSize у объекта:', movingObject.userData.name);
+    return result;
+  }
+  
+  // Проверка стен
+  const wallCollision = this.collisionHelper.checkWallCollisionXZ(
+    result.position, 
+    movingHalfSize,
+    this.sceneManager.roomW,
+    this.sceneManager.roomD,
+    this.wallOffsetMargin
+  );
+  
+  result.position = wallCollision.position;
+  result.hasCollision = wallCollision.hasCollision;
+  
+  // Проверка коллизий с другими объектами (опционально)
+  if (this.enablePreciseCollisions) {
     const objectCollision = this.collisionHelper.checkObjectCollisionsXZ(
-      result.position, 
-      movingObject, 
+      result.position,
+      movingObject,
       movingHalfSize,
       this.sceneManager.objects,
       this
     );
     
     if (objectCollision.hasCollision) {
-      result.position.x = objectCollision.position.x;
-      result.position.z = objectCollision.position.z;
+      result.position = objectCollision.position;
       result.hasCollision = true;
     }
-    
-    return result;
-  },
-
+  }
+  
+  return result;
+},
   checkFloorCollision: function(position, object) {
     const result = position.clone();
     
@@ -183,6 +203,7 @@ const CollisionManager = {
   },
 
   isObjectInCollision: function(object) {
+    if (!this.collisionsEnabled) return false;
     if (!object || !object.userData.halfSize) return false;
     
     const halfSize = object.userData.combinedHalfSize || object.userData.halfSize;
@@ -221,6 +242,10 @@ const CollisionManager = {
   },
 
   checkAllCollisions: function(position, movingObject) {
+    if (!this.collisionsEnabled) {
+      return { position: position.clone(), hasCollision: false };
+    }
+    
     const result = { position: position.clone(), hasCollision: false };
     
     const movingHalfSize = movingObject.userData.combinedHalfSize || movingObject.userData.halfSize || { x: 0, y: 0, z: 0 };
@@ -260,46 +285,40 @@ const CollisionManager = {
     return result;
   },
 
-  visualizeColliders: function(object) {
-    if (!object.userData.colliders || object.userData.colliders.length === 0) return;
-    
-    this.sceneManager.scene.traverse((child) => {
-      if (child.userData && child.userData.debugCollider && child.userData.parentId === object.uuid) {
-        this.sceneManager.scene.remove(child);
-      }
-    });
-    
-    object.userData.debugColliderMeshes = [];
-    
-    object.userData.colliders.forEach((collider, index) => {
-      const size = new THREE.Vector3();
-      collider.getSize(size);
-      
-      const center = new THREE.Vector3();
-      collider.getCenter(center);
-      
-      const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.7
-      });
-      
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.copy(center);
-      mesh.userData = {
-        debugCollider: true,
-        parentId: object.uuid,
-        colliderIndex: index
-      };
-      
-      this.sceneManager.scene.add(mesh);
-      object.userData.debugColliderMeshes.push(mesh);
-    });
-  },
+ visualizeColliders: function(object) {
+  if (!object.userData.halfSize) return;
+  
+  const halfSize = object.userData.halfSize;
+  const center = object.position.clone();
+  
+  // Создаем видимую рамку вокруг модели
+  const geometry = new THREE.BoxGeometry(halfSize.x * 2, halfSize.y * 2, halfSize.z * 2);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.8
+  });
+  
+  const wireframe = new THREE.Mesh(geometry, material);
+  wireframe.position.copy(center);
+  wireframe.userData = { debugCollider: true, parentId: object.uuid };
+  
+  // Удаляем старый коллайдер если есть
+  if (object.userData.debugWireframe) {
+    this.sceneManager.scene.remove(object.userData.debugWireframe);
+  }
+  
+  object.userData.debugWireframe = wireframe;
+  this.sceneManager.scene.add(wireframe);
+  
+  console.log('Визуализация коллайдера для:', object.userData.name);
+  console.log('Позиция коллайдера:', center);
+  console.log('Размер коллайдера:', halfSize);
+},
 
   checkInitialCollisions: function(newObject) {
+    if (!this.collisionsEnabled) return;
     if (!newObject || !newObject.userData.halfSize) return;
     
     let position = newObject.position.clone();

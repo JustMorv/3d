@@ -12,7 +12,7 @@ const UIManager = {
 
   toggleAccordion: function(id) {
     const content = document.getElementById(id);
-    const title = content.previousElementSibling;
+    const title = content ? content.previousElementSibling : null;
     
     if (content && title) {
       content.classList.toggle('expanded');
@@ -39,7 +39,7 @@ const UIManager = {
   showNotification: function(message, type = 'info', duration = 3000) {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.innerHTML = message;
+    notification.innerHTML = typeof message === 'string' ? message : JSON.stringify(message);
     
     notification.style.position = 'fixed';
     notification.style.top = '20px';
@@ -61,7 +61,6 @@ const UIManager = {
     
     document.body.appendChild(notification);
     
-    // Автоматическое скрытие
     setTimeout(() => {
       if (notification.parentNode) {
         notification.style.opacity = '0';
@@ -74,7 +73,6 @@ const UIManager = {
       }
     }, duration);
     
-    // Кнопка закрытия
     const closeBtn = document.createElement('span');
     closeBtn.innerHTML = '×';
     closeBtn.style.position = 'absolute';

@@ -1,20 +1,450 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room Editor</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Room Editor | Профессиональный 3D дизайн кухни</title>
+  <style>
+    /* ===== RESET & ГЛОБАЛЬНЫЕ СТИЛИ ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* предотвращает выделение текста при перетаскивании */
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Poppins', sans-serif;
+      background: radial-gradient(circle at 20% 30%, #eef2f7, #d9e0e8);
+    }
+
+    /* КАСТОМНЫЙ СКРОЛЛ ДЛЯ МЕНЮ */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(74, 110, 224, 0.4);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4a6ee0;
+    }
+
+    /* ===== ГЛАВНОЕ МЕНЮ - НЕО-МОРФИЗМ + СТЕКЛО ===== */
+    #main-menu {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px);
+      border-radius: 28px;
+      width: 280px;
+      padding: 20px 18px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.5);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.6);
+      max-height: 90vh;
+      overflow-y: auto;
+      font-weight: 500;
+    }
+
+    #main-menu:hover {
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+    }
+
+    .menu-title {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1e2f5e, #4a6ee0, #8a2be2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(74, 110, 224, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .menu-title::before {
+      content: "✨";
+      font-size: 24px;
+    }
+
+    .section-title {
+      margin: 20px 0 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2a44;
+      padding: 8px 12px;
+      background: rgba(74, 110, 224, 0.08);
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+      letter-spacing: -0.2px;
+    }
+
+    .section-title:hover {
+      background: rgba(74, 110, 224, 0.18);
+      transform: translateX(3px);
+    }
+
+    .arrow {
+      font-size: 12px;
+      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      color: #4a6ee0;
+    }
+
+    .section-title.expanded .arrow {
+      transform: rotate(180deg);
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+
+    .accordion-content.expanded {
+      max-height: 800px;
+    }
+
+    #main-menu button {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 6px 0;
+      background: rgba(248, 250, 255, 0.8);
+      border: 1px solid rgba(74, 110, 224, 0.25);
+      border-radius: 18px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #1e293b;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    #main-menu button i {
+      font-style: normal;
+      font-size: 18px;
+      width: 28px;
+      text-align: center;
+    }
+
+    #main-menu button:hover {
+      background: linear-gradient(105deg, #4a6ee0, #7c3aed);
+      border-color: transparent;
+      color: white;
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 10px 20px -8px rgba(74, 110, 224, 0.5);
+    }
+
+    /* КОНТЕКСТНОЕ МЕНЮ - ГЛАМУР */
+    #context-menu {
+      position: fixed;
+      background: rgba(20, 20, 35, 0.9);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 10px;
+      min-width: 200px;
+      z-index: 2000;
+      display: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+      animation: menuFade 0.2s ease;
+    }
+
+    @keyframes menuFade {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #context-menu .menu-item {
+      padding: 12px 16px;
+      color: #f0f3fa;
+      border-radius: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    #context-menu .menu-item:hover {
+      background: rgba(74, 110, 224, 0.5);
+      transform: translateX(5px);
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+      margin: 8px 0;
+    }
+
+    /* СТАТУС БАР */
+    #status-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 15, 30, 0.75);
+      backdrop-filter: blur(20px);
+      padding: 12px 24px;
+      border-radius: 60px;
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 100;
+      display: flex;
+      gap: 28px;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      letter-spacing: 0.3px;
+    }
+
+    .status-item {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-value {
+      color: #8bb9fe;
+      font-weight: 700;
+    }
+
+    /* ШЕСТЕРЕНКА (вращение/сброс) */
+    .gear-icon {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      width: 48px;
+      height: 48px;
+      background: rgba(74, 110, 224, 0.9);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 150;
+      backdrop-filter: blur(8px);
+      border: 2px solid white;
+      transition: 0.3s cubic-bezier(0.2, 0.9, 0.6, 1.1);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .gear-icon:hover {
+      transform: rotate(180deg) scale(1.1);
+      background: #2c3e66;
+    }
+
+    /* ========== 3D КОМПАС (BLENDER STYLE) с индикацией поворота ========== */
+    #blender-compass {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 250;
+      width: 140px;
+      height: 140px;
+      background: rgba(18, 22, 35, 0.65);
+      backdrop-filter: blur(12px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,240,0.2);
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .compass-axes {
+      position: relative;
+      width: 110px;
+      height: 110px;
+    }
+
+    .axis {
+      position: absolute;
+      background: rgba(220, 220, 255, 0.9);
+      transition: all 0.15s;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.2);
+    }
+
+    /* X axis */
+    .axis-x {
+      width: 70px;
+      height: 5px;
+      background: #ff4d4d;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .axis-x.left { left: 0; border-radius: 8px 0 0 8px; }
+    .axis-x.right { right: 0; border-radius: 0 8px 8px 0; }
+    .axis-x::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ff4d4d;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .axis-x.left::after { right: -6px; }
+    .axis-x.right::after { left: -6px; }
+
+    /* Y axis */
+    .axis-y {
+      width: 5px;
+      height: 70px;
+      background: #4dff88;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .axis-y.front { top: 0; border-radius: 8px 8px 0 0; }
+    .axis-y.back { bottom: 0; border-radius: 0 0 8px 8px; }
+    .axis-y::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: #4dff88;
+      border-radius: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      position: absolute;
+    }
+    .axis-y.front::after { bottom: -6px; }
+    .axis-y.back::after { top: -6px; }
+
+    /* Z axis (диагональная стилизация) */
+    .axis-z {
+      width: 6px;
+      height: 60px;
+      background: #4da6ff;
+      left: 50%;
+      transform-origin: center;
+      transform: translateX(-50%) rotate(45deg);
+    }
+    .axis-z.top { top: 5px; }
+    .axis-z.bottom { bottom: 5px; }
+    .axis-z::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: #4da6ff;
+      border-radius: 50%;
+      position: absolute;
+      bottom: -6px;
+      left: -3px;
+    }
+
+    .axis-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      background: radial-gradient(circle, #ccc, #888);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px black;
+      transition: 0.1s;
+    }
+    .axis-center:hover { transform: translate(-50%, -50%) scale(1.2); background: #ffaa44; }
+
+    .axis:hover { opacity: 1; filter: brightness(1.2); transform: scale(1.02); }
+
+    /* вспомогательные элементы (ширина, круг) */
+    .rotation-circle {
+      position: absolute;
+      border: 2px dashed rgba(74, 110, 224, 0.7);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0;
+    }
+    .rotation-handle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle, #ffaa44, #ff884d);
+      border-radius: 50%;
+      cursor: grab;
+      z-index: 51;
+      border: 2px solid white;
+    }
+
+    .object-info {
+      position: absolute;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-size: 12px;
+      color: white;
+      pointer-events: none;
+      font-weight: 500;
+      border-left: 3px solid #4a6ee0;
+    }
+
+    .width-control {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293bc9;
+      backdrop-filter: blur(25px);
+      padding: 18px;
+      border-radius: 32px;
+      display: none;
+      z-index: 2000;
+      gap: 12px;
+      color: white;
+      flex-direction: column;
+      min-width: 300px;
+    }
+    .width-control button {
+      background: #4a6ee0;
+      border: none;
+      padding: 8px;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+    }
+    input[type="range"] { width: 100%; }
+  </style>
 </head>
 <body>
 
-<!-- Главное меню -->
+<!-- Главное меню (функционал полностью сохранён, только стили обновлены) -->
 <div id="main-menu">
   <div class="menu-title">🏠 3D Редактор кухни</div>
-  
   <div class="section-title" onclick="window.app.uiManager.toggleAccordion('models-accordion')">
-    <span>🎨 3D Модели кухни</span>
-    <span class="arrow">▼</span>
+    <span>🎨 3D Модели кухни</span><span class="arrow">▼</span>
   </div>
   <div id="models-accordion" class="accordion-content">
     <button onclick="window.app.modelLoader.loadModel('basic_kitchen')"><i>🍽️</i> Базовая кухня</button>
@@ -29,122 +459,206 @@
     <button onclick="window.app.modelLoader.loadModel('pigan')"><i>🐷</i> Пиган кухня</button>
     <button onclick="window.app.modelLoader.loadModel('pobin')"><i>🏡</i> Побин кухня</button>
   </div>
-  
- <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')">
-  <span>⚙️ Управление</span>
-  <span class="arrow">▼</span>
-</div>
-<div id="management-accordion" class="accordion-content">
-  <button onclick="window.app.selectionManager.deleteSelected()"><i>🗑️</i> Удалить выбранный</button>
-  <button onclick="window.app.modelManager.clearAllModels()"><i>🔥</i> Удалить все модели</button>
-  <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
-  <button onclick="window.app.selectionManager.enableWidthMode()"><i>📏</i> Изменить ширину</button>
-  <button onclick="window.app.selectionManager.resetObject()"><i>🔄</i> Сбросить объект</button>
-  <button onclick="window.app.selectionManager.alignToFloor()"><i>⬆️</i> Выровнять по полу</button>
-  <button onclick="window.app.modelManager.fixAllModelsHeight()"><i>⬆️⬆️</i> Выровнять все объекты</button>
-  <button onclick="window.app.modelManager.checkAllModelSizes()"><i>📊</i> Проверить размеры</button>
-  <button onclick="window.app.modelManager.normalizeAllModels()"><i>⚖️</i> Нормализовать размеры</button>
-  <button onclick="window.app.modelManager.recenterAllModels()"><i>🎯</i> Центрировать все модели</button>
-  <button onclick="window.app.modelManager.resetAllPositions()"><i>🔄</i> Сбросить позиции</button>
-  
-  <!-- НОВЫЕ КНОПКИ -->
-  <button onclick="window.app.modelManager.forceModelsIntoRoom()"><i>🏠</i> Разместить все в комнате</button>
-  <button onclick="window.app.modelManager.shrinkOversizedModels()"><i>📉</i> Уменьшить большие модели</button>
-</div>
-  
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')">
-    <span>🎯 Коллизии</span>
-    <span class="arrow">▼</span>
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')"><span>⚙️ Управление</span><span class="arrow">▼</span></div>
+  <div id="management-accordion" class="accordion-content">
+    <button onclick="window.app.selectionManager.deleteSelected()"><i>🗑️</i> Удалить выбранный</button>
+    <button onclick="window.app.modelManager.clearAllModels()"><i>🔥</i> Удалить все модели</button>
+    <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
+    <button onclick="window.app.selectionManager.enableWidthMode()"><i>📏</i> Изменить ширину</button>
+    <button onclick="window.app.selectionManager.resetObject()"><i>🔄</i> Сбросить объект</button>
+    <button onclick="window.app.selectionManager.alignToFloor()"><i>⬆️</i> Выровнять по полу</button>
+    <button onclick="window.app.modelManager.fixAllModelsHeight()"><i>⬆️⬆️</i> Выровнять все объекты</button>
+    <button onclick="window.app.modelManager.checkAllModelSizes()"><i>📊</i> Проверить размеры</button>
+    <button onclick="window.app.modelManager.normalizeAllModels()"><i>⚖️</i> Нормализовать размеры</button>
+    <button onclick="window.app.modelManager.recenterAllModels()"><i>🎯</i> Центрировать все модели</button>
+    <button onclick="window.app.modelManager.resetAllPositions()"><i>🔄</i> Сбросить позиции</button>
+    <button onclick="window.app.modelManager.forceModelsIntoRoom()"><i>🏠</i> Разместить все в комнате</button>
+    <button onclick="window.app.modelManager.shrinkOversizedModels()"><i>📉</i> Уменьшить большие модели</button>
   </div>
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')"><span>🎯 Коллизии</span><span class="arrow">▼</span></div>
   <div id="collisions-accordion" class="accordion-content">
-    <button onclick="window.app.collisionManager.togglePreciseCollisions()" id="collision-toggle">
-      <i>🎯</i> <span id="collision-status">Точные столкновения: ВКЛ</span>
-    </button>
+    <button onclick="window.app.collisionManager.togglePreciseCollisions()"><i>🎯</i><span id="collision-status">Точные столкновения: ВКЛ</span></button>
     <button onclick="window.app.collisionManager.showColliders()"><i>👁️</i> Показать коллайдеры</button>
     <button onclick="window.app.collisionManager.hideColliders()"><i>👁️‍🗨️</i> Скрыть коллайдеры</button>
   </div>
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('placement-accordion')"><span>📍 Оптимальное размещение</span><span class="arrow">▼</span></div>
+  <div id="placement-accordion" class="accordion-content">
+    <button onclick="window.app.modelManager.placeSelectedInCenter()"><i>🎯</i> Центрировать выбранное</button>
+    <button onclick="window.app.modelManager.autoArrangeModels()"><i>🔀</i> Авторасстановка всех моделей</button>
+  </div>
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')"><span>📊 Информация</span><span class="arrow">▼</span></div>
+  <div id="info-accordion" class="accordion-content">
+    <button onclick="window.app.modelManager.toggleAllModelsSizes()"><i>📏</i><span id="sizes-toggle-text">Показать размеры всех моделей</span></button>
+    <button onclick="window.app.modelManager.showRoomInfo()"><i>🏠</i> Информация о комнате</button>
+    <button onclick="window.app.sceneManager.showRoomBoundaries()"><i>📐</i> Показать границы комнаты</button>
+    <button onclick="window.app.sceneManager.hideRoomBoundaries()"><i>🙈</i> Скрыть границы</button>
+    <button onclick="window.app.collisionManager.toggleCollisions()"><i>🚫</i> Вкл/Выкл коллизии</button>
+    <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
+<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'left')"><i>⬅️</i> К левой стене</button>
+<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'right')"><i>➡️</i> К правой стене</button>
+<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'back')"><i>⬆️</i> К задней стене</button>
+<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'front')"><i>⬇️</i> К передней стене</button>
+<button onclick="console.log('Collisions enabled:', window.app.collisionManager.collisionsEnabled); window.app.collisionManager.collisionsEnabled = true; console.log('Now set to:', window.app.collisionManager.collisionsEnabled)">
+  <i>🔧</i> Проверить коллизии
+</button>
+  </div>
+</div>
 
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('placement-accordion')">
-  <span>📍 Оптимальное размещение</span>
-  <span class="arrow">▼</span>
-</div>
-<div id="placement-accordion" class="accordion-content">
-  <button onclick="window.app.modelManager.placeSelectedInCenter()"><i>🎯</i> Центрировать выбранное</button>
-  <button onclick="window.app.modelManager.autoArrangeModels()"><i>🔀</i> Авторасстановка всех моделей</button>
-</div>
-
-<!-- НОВАЯ СЕКЦИЯ: ИНФОРМАЦИЯ -->
-<div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')">
-  <span>📊 Информация</span>
-  <span class="arrow">▼</span>
-</div>
-<div id="info-accordion" class="accordion-content">
-  <button id="toggle-all-sizes-btn" onclick="window.app.modelManager.toggleAllModelsSizes()">
-    <i>📏</i> <span id="sizes-toggle-text">Показать размеры всех моделей</span>
-  </button>
-  <button onclick="window.app.modelManager.showRoomInfo()">
-    <i>🏠</i> Информация о комнате
-  </button>
-</div>
+<!-- 3D КОМПАС (BLENDER стиль, динамическое вращение) -->
+<div id="blender-compass">
+  <div class="compass-axes" id="compass-axes-container">
+    <div class="axis axis-x left" data-view="left" title="Вид слева"></div>
+    <div class="axis axis-x right" data-view="right" title="Вид справа"></div>
+    <div class="axis axis-y front" data-view="front" title="Вид спереди"></div>
+    <div class="axis axis-y back" data-view="back" title="Вид сзади"></div>
+    <div class="axis axis-z top" data-view="top" title="Вид сверху"></div>
+    <div class="axis axis-z bottom" data-view="bottom" title="Вид снизу"></div>
+    <div class="axis-center" title="Сбросить перспективу"></div>
+  </div>
 </div>
 
 <!-- Контекстное меню -->
 <div id="context-menu">
-  <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()">
-    <i>🔄</i> Повернуть объект
-  </div>
-  <div class="menu-item" onclick="window.app.rotationManager.resetRotation()">
-    <i>↩️</i> Сбросить вращение
-  </div>
+  <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()"><i>🔄</i> Повернуть объект</div>
+  <div class="menu-item" onclick="window.app.rotationManager.resetRotation()"><i>↩️</i> Сбросить вращение</div>
   <div class="divider"></div>
-  <div class="menu-item" onclick="window.app.selectionManager.cloneObject()">
-    <i>⎘</i> Дублировать
-  </div>
+  <div class="menu-item" onclick="window.app.selectionManager.cloneObject()"><i>⎘</i> Дублировать</div>
   <div class="divider"></div>
-  <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #e74c3c;">
-    <i>🗑️</i> Удалить объект
-  </div>
+  <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #ff7b72;"><i>🗑️</i> Удалить объект</div>
 </div>
 
-<!-- Three.js библиотеки -->
+
+<div class="width-control" id="width-control-panel"><span>Изменить ширину</span><input type="range" id="width-slider" min="0.2" max="3" step="0.01"><button onclick="window.app.selectionManager.applyWidthChange()">Применить</button></div>
+
+<!-- Скрипты Three.js и модули (оригинальные, без изменений функционала) -->
 <script src="https://unpkg.com/three@0.90.0/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/loaders/OBJLoader.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/libs/stats.min.js"></script>
-
 <script>
-  if (location.href.indexOf('localhost') !== -1) {
-    document.write('<script src="http://localhost:3000/dist/three-dragger.umd.js"><\/script>');
-  } else {
-    document.write('<script src="https://unpkg.com/three-dragger"><\/script>');
-  }
+  if (location.href.indexOf('localhost') !== -1) document.write('<script src="http://localhost:3000/dist/three-dragger.umd.js"><\/script>');
+  else document.write('<script src="https://unpkg.com/three-dragger"><\/script>');
 </script>
 
-<!-- Подключаем модули -->
 <script src="modules/Utils/MathHelper.js"></script>
 <script src="modules/Utils/DebugHelper.js"></script>
 <script src="modules/Utils/EventManager.js"></script>
-
 <script src="modules/Core/SceneManager.js"></script>
 <script src="modules/Core/CameraController.js"></script>
 <script src="modules/Core/UIManager.js"></script>
 <script src="modules/Core/App.js"></script>
-
 <script src="modules/Models/ModelLoader.js"></script>
 <script src="modules/Models/ModelManager.js"></script>
 <script src="modules/Models/ModelNormalizer.js"></script>
-
 <script src="modules/Physics/CollisionManager.js"></script>
 <script src="modules/Physics/CollisionHelper.js"></script>
 <script src="modules/Physics/WallManager.js"></script>
-
 <script src="modules/Interactions/DragManager.js"></script>
 <script src="modules/Interactions/SelectionManager.js"></script>
 <script src="modules/Interactions/RotationManager.js"></script>
 <script src="modules/Interactions/ContextMenu.js"></script>
-
 <script src="main.js"></script>
 
+<script>
+  // ========== РАСШИРЕННЫЙ КОМПАС С ДИНАМИЧЕСКИМ ПОВОРОТОМ (как в Blender) ==========
+  (function() {
+    // ждём пока cameraController инициализируется
+    function initCompassInteractions() {
+      const axes = document.querySelectorAll('.axis, .axis-center');
+      axes.forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const view = el.getAttribute('data-view');
+          if (view && window.app && window.app.cameraController) {
+            if (view === 'top') window.app.cameraController.setView('top');
+            else if (view === 'bottom') window.app.cameraController.setView('bottom');
+            else if (view === 'left') window.app.cameraController.setView('left');
+            else if (view === 'right') window.app.cameraController.setView('right');
+            else if (view === 'front') window.app.cameraController.setView('front');
+            else if (view === 'back') window.app.cameraController.setView('back');
+          } else if (el.classList.contains('axis-center') && window.app && window.app.cameraController) {
+            window.app.cameraController.resetView();
+          }
+        });
+      });
+      
+      // ДИНАМИЧЕСКОЕ ВРАЩЕНИЕ КОМПАСА синхронно с камерой (Blender style)
+      function updateCompassRotation() {
+        const compassElem = document.getElementById('blender-compass');
+        if (!compassElem) return;
+        const camera = window.app?.cameraController?.camera;
+        if (!camera) return;
+        // Получаем углы камеры в горизонтальной плоскости
+        const direction = camera.getWorldDirection(new THREE.Vector3());
+        const angleY = Math.atan2(direction.x, direction.z);
+        const angleDeg = angleY * (180 / Math.PI);
+        // Вращаем компас относительно оси Y (только азимут)
+        compassElem.style.transform = `rotate(${-angleDeg}deg)`;
+        // Небольшой эффект инвертирования X при взгляде снизу? Для эстетики
+        const isUpside = camera.position.y < 0;
+        if(isUpside) compassElem.style.opacity = '0.85';
+        else compassElem.style.opacity = '1';
+      }
+      
+      if(window.app && window.app.cameraController) {
+        setInterval(() => { updateCompassRotation(); }, 50);
+        // Также обновляем при рендере
+        const origUpdate = window.app.cameraController.update;
+        if(origUpdate) {
+          window.app.cameraController.update = function() {
+            origUpdate.call(window.app.cameraController);
+            updateCompassRotation();
+          };
+        }
+      } else {
+        setTimeout(initCompassInteractions, 500);
+      }
+    }
+    
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCompassInteractions);
+    else initCompassInteractions();
+  })();
+  
+  // Дополнительно: аккордеон и статус (стилизация)
+  if(window.app && window.app.uiManager) {
+    const origToggle = window.app.uiManager.toggleAccordion;
+    window.app.uiManager.toggleAccordion = function(id) {
+      if(origToggle) origToggle.call(window.app.uiManager, id);
+      const el = document.getElementById(id);
+      const parentDiv = el?.parentElement?.querySelector('.section-title');
+      if(parentDiv && el) {
+        if(el.classList.contains('expanded')) parentDiv.classList.add('expanded');
+        else parentDiv.classList.remove('expanded');
+      }
+    };
+    document.querySelectorAll('.section-title').forEach(title => {
+      const accordId = title.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+      if(accordId && document.getElementById(accordId)?.classList.contains('expanded')) title.classList.add('expanded');
+    });
+  }
+  
+  // Счётчик объектов обновляем (красивый статус)
+  function updateObjectsCountUI() {
+    const count = window.app?.modelManager?.models?.length || 0;
+    const span = document.getElementById('objects-count');
+    if(span) span.innerText = count;
+  }
+  setInterval(updateObjectsCountUI, 300);
+  
+  // Фиксация статуса коллизий
+  if(window.app && window.app.collisionManager) {
+    const toggleBtn = document.getElementById('collision-status');
+    if(toggleBtn && window.app.collisionManager.preciseMode !== undefined) {
+      const updateText = () => { toggleBtn.innerText = `Точные столкновения: ${window.app.collisionManager.preciseMode ? 'ВКЛ' : 'ВЫКЛ'}`; };
+      updateText();
+      const origToggle = window.app.collisionManager.togglePreciseCollisions;
+      if(origToggle) window.app.collisionManager.togglePreciseCollisions = function() {
+        origToggle.call(window.app.collisionManager);
+        updateText();
+      };
+    }
+  }
+</script>
 </body>
 </html>
