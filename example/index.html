@@ -10,7 +10,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      user-select: none; /* предотвращает выделение текста при перетаскивании */
+      user-select: none;
     }
 
     body {
@@ -20,7 +20,7 @@
       background: radial-gradient(circle at 20% 30%, #eef2f7, #d9e0e8);
     }
 
-    /* КАСТОМНЫЙ СКРОЛЛ ДЛЯ МЕНЮ */
+    /* КАСТОМНЫЙ СКРОЛЛ */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -36,16 +36,16 @@
       background: #4a6ee0;
     }
 
-    /* ===== ГЛАВНОЕ МЕНЮ - НЕО-МОРФИЗМ + СТЕКЛО ===== */
+    /* ===== ГЛАВНОЕ МЕНЮ ===== */
     #main-menu {
       position: fixed;
       top: 24px;
       left: 24px;
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(20px);
       border-radius: 28px;
-      width: 280px;
-      padding: 20px 18px;
+      width: 400px;
+      padding: 20px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.5);
       z-index: 1000;
       transition: all 0.3s ease;
@@ -55,15 +55,9 @@
       font-weight: 500;
     }
 
-    #main-menu:hover {
-      background: rgba(255, 255, 255, 0.94);
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
-    }
-
     .menu-title {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 700;
-      margin-left: 20px;
       background: linear-gradient(135deg, #1e2f5e, #4a6ee0, #8a2be2);
       -webkit-background-clip: text;
       background-clip: text;
@@ -73,25 +67,90 @@
       border-bottom: 2px solid rgba(74, 110, 224, 0.3);
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
-      letter-spacing: -0.3px;
     }
 
+    /* Поиск */
+    .search-box {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 12px 40px 12px 16px;
+      background: rgba(248, 250, 255, 0.9);
+      border: 1px solid rgba(74, 110, 224, 0.25);
+      border-radius: 24px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .search-box input:focus {
+      border-color: #4a6ee0;
+      box-shadow: 0 0 0 2px rgba(74, 110, 224, 0.2);
+    }
+    .search-box input::placeholder {
+      color: #94a3b8;
+    }
+    .search-clear {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 18px;
+      display: none;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+    }
+    .search-clear:hover {
+      color: #4a6ee0;
+      background: rgba(74,110,224,0.1);
+    }
+
+    /* Кнопки управления аккордеонами */
+    .accordion-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .accordion-controls button {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(74, 110, 224, 0.1);
+      border: 1px solid rgba(74, 110, 224, 0.3);
+      border-radius: 24px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #4a6ee0;
+      transition: all 0.2s;
+    }
+    .accordion-controls button:hover {
+      background: #4a6ee0;
+      color: white;
+    }
 
     .section-title {
-      margin: 20px 0 10px;
+      margin: 14px 0 10px;
       font-size: 15px;
       font-weight: 600;
       color: #1f2a44;
-      padding: 8px 12px;
+      padding: 12px 14px;
       background: rgba(74, 110, 224, 0.08);
-      border-radius: 14px;
+      border-radius: 16px;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
       transition: all 0.2s;
-      letter-spacing: -0.2px;
     }
 
     .section-title:hover {
@@ -99,8 +158,24 @@
       transform: translateX(3px);
     }
 
-    .arrow {
+    .section-title .title-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+    }
+
+    .section-title .badge {
+      background: rgba(74, 110, 224, 0.2);
+      padding: 3px 10px;
+      border-radius: 24px;
       font-size: 12px;
+      font-weight: 600;
+      color: #4a6ee0;
+    }
+
+    .arrow {
+      font-size: 14px;
       transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
       color: #4a6ee0;
     }
@@ -112,52 +187,96 @@
     .accordion-content {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+      transition: max-height 0.35s cubic-bezier(0.33, 1, 0.68, 1);
     }
 
     .accordion-content.expanded {
-      max-height: 800px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    /* Скрытие пустых секций при поиске */
+    .section-category.hidden-category {
+      display: none;
+    }
+
+    /* Группа кнопок с сеткой */
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 6px 0 12px;
     }
 
     #main-menu button {
-      width: 100%;
-      padding: 12px 14px;
-      margin: 6px 0;
+      padding: 10px 12px;
       background: rgba(248, 250, 255, 0.8);
       border: 1px solid rgba(74, 110, 224, 0.25);
-      border-radius: 18px;
+      border-radius: 16px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       text-align: left;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       color: #1e293b;
       transition: all 0.2s ease;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
 
     #main-menu button i {
       font-style: normal;
-      font-size: 18px;
+      font-size: 16px;
       width: 28px;
       text-align: center;
+      flex-shrink: 0;
+    }
+
+    #main-menu button span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    /* Подсветка найденного текста */
+    #main-menu button span mark {
+      background: #ffd966;
+      color: #1e293b;
+      border-radius: 4px;
+      padding: 0 2px;
     }
 
     #main-menu button:hover {
       background: linear-gradient(105deg, #4a6ee0, #7c3aed);
       border-color: transparent;
       color: white;
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 10px 20px -8px rgba(74, 110, 224, 0.5);
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 8px 16px -6px rgba(74, 110, 224, 0.4);
     }
 
-    /* КОНТЕКСТНОЕ МЕНЮ - ГЛАМУР */
+    #main-menu button:hover span mark {
+      background: rgba(255,255,255,0.3);
+      color: white;
+    }
+
+    /* Скрытие элементов при поиске */
+    .model-item.hidden {
+      display: none;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 24px;
+      color: #94a3b8;
+      font-size: 14px;
+      display: none;
+    }
+
+    /* Контекстное меню */
     #context-menu {
       position: fixed;
-      background: rgba(20, 20, 35, 0.9);
+      background: rgba(20, 20, 35, 0.95);
       backdrop-filter: blur(20px);
       border-radius: 20px;
       padding: 10px;
@@ -183,6 +302,7 @@
       align-items: center;
       cursor: pointer;
       transition: 0.15s;
+      font-size: 14px;
     }
 
     #context-menu .menu-item:hover {
@@ -196,7 +316,7 @@
       margin: 8px 0;
     }
 
-    /* СТАТУС БАР */
+    /* Статус бар */
     #status-bar {
       position: fixed;
       bottom: 24px;
@@ -204,17 +324,16 @@
       transform: translateX(-50%);
       background: rgba(10, 15, 30, 0.75);
       backdrop-filter: blur(20px);
-      padding: 12px 24px;
+      padding: 10px 24px;
       border-radius: 60px;
       color: white;
       font-size: 13px;
       font-weight: 500;
       z-index: 100;
       display: flex;
-      gap: 28px;
+      gap: 24px;
       border: 1px solid rgba(255,255,255,0.2);
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      letter-spacing: 0.3px;
     }
 
     .status-item {
@@ -228,7 +347,6 @@
       font-weight: 700;
     }
 
-    /* ШЕСТЕРЕНКА (вращение/сброс) */
     .gear-icon {
       position: absolute;
       bottom: 30px;
@@ -254,160 +372,6 @@
       background: #2c3e66;
     }
 
-    /* ========== 3D КОМПАС (BLENDER STYLE) с индикацией поворота ========== */
-    #blender-compass {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      z-index: 250;
-      width: 140px;
-      height: 140px;
-      background: rgba(18, 22, 35, 0.65);
-      backdrop-filter: blur(12px);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,240,0.2);
-      transition: 0.2s;
-      cursor: pointer;
-    }
-
-    .compass-axes {
-      position: relative;
-      width: 110px;
-      height: 110px;
-    }
-
-    .axis {
-      position: absolute;
-      background: rgba(220, 220, 255, 0.9);
-      transition: all 0.15s;
-      cursor: pointer;
-      border-radius: 4px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.2);
-    }
-
-    /* X axis */
-    .axis-x {
-      width: 70px;
-      height: 5px;
-      background: #ff4d4d;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-    .axis-x.left { left: 0; border-radius: 8px 0 0 8px; }
-    .axis-x.right { right: 0; border-radius: 0 8px 8px 0; }
-    .axis-x::after {
-      content: '';
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      background: #ff4d4d;
-      border-radius: 50%;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-    .axis-x.left::after { right: -6px; }
-    .axis-x.right::after { left: -6px; }
-
-    /* Y axis */
-    .axis-y {
-      width: 5px;
-      height: 70px;
-      background: #4dff88;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    .axis-y.front { top: 0; border-radius: 8px 8px 0 0; }
-    .axis-y.back { bottom: 0; border-radius: 0 0 8px 8px; }
-    .axis-y::after {
-      content: '';
-      width: 12px;
-      height: 12px;
-      background: #4dff88;
-      border-radius: 50%;
-      left: 50%;
-      transform: translateX(-50%);
-      position: absolute;
-    }
-    .axis-y.front::after { bottom: -6px; }
-    .axis-y.back::after { top: -6px; }
-
-    /* Z axis (диагональная стилизация) */
-    .axis-z {
-      width: 6px;
-      height: 60px;
-      background: #4da6ff;
-      left: 50%;
-      transform-origin: center;
-      transform: translateX(-50%) rotate(45deg);
-    }
-    .axis-z.top { top: 5px; }
-    .axis-z.bottom { bottom: 5px; }
-    .axis-z::after {
-      content: '';
-      width: 12px;
-      height: 12px;
-      background: #4da6ff;
-      border-radius: 50%;
-      position: absolute;
-      bottom: -6px;
-      left: -3px;
-    }
-
-    .axis-center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 18px;
-      height: 18px;
-      background: radial-gradient(circle, #ccc, #888);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      cursor: pointer;
-      border: 2px solid white;
-      box-shadow: 0 0 0 1px black;
-      transition: 0.1s;
-    }
-    .axis-center:hover { transform: translate(-50%, -50%) scale(1.2); background: #ffaa44; }
-
-    .axis:hover { opacity: 1; filter: brightness(1.2); transform: scale(1.02); }
-
-    /* вспомогательные элементы (ширина, круг) */
-    .rotation-circle {
-      position: absolute;
-      border: 2px dashed rgba(74, 110, 224, 0.7);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 50;
-      opacity: 0;
-    }
-    .rotation-handle {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: radial-gradient(circle, #ffaa44, #ff884d);
-      border-radius: 50%;
-      cursor: grab;
-      z-index: 51;
-      border: 2px solid white;
-    }
-
-    .object-info {
-      position: absolute;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(12px);
-      padding: 8px 14px;
-      border-radius: 40px;
-      font-size: 12px;
-      color: white;
-      pointer-events: none;
-      font-weight: 500;
-      border-left: 3px solid #4a6ee0;
-    }
-
     .width-control {
       position: fixed;
       bottom: 100px;
@@ -415,89 +379,229 @@
       transform: translateX(-50%);
       background: #1e293bc9;
       backdrop-filter: blur(25px);
-      padding: 18px;
+      padding: 20px;
       border-radius: 32px;
       display: none;
       z-index: 2000;
-      gap: 12px;
+      gap: 14px;
       color: white;
       flex-direction: column;
-      min-width: 300px;
+      min-width: 320px;
+    }
+    .width-control span {
+      font-size: 14px;
+      font-weight: 500;
     }
     .width-control button {
       background: #4a6ee0;
       border: none;
-      padding: 8px;
+      padding: 10px;
       border-radius: 40px;
       color: white;
       font-weight: bold;
+      cursor: pointer;
     }
-    input[type="range"] { width: 100%; }
+    input[type="range"] { 
+      width: 100%;
+      margin: 6px 0;
+    }
   </style>
 </head>
 <body>
 
-<!-- Главное меню (функционал полностью сохранён, только стили обновлены) -->
 <div id="main-menu">
-  <div class="menu-title">🏠 3D Редактор</div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('models-accordion')">
-    <span> 3D Модели кухни</span><span class="arrow">▼</span>
+  <div class="menu-title">
+    <span>🏠 3D Редактор</span>
+    <span style="font-size: 13px;" id="total-models-count">0 моделей</span>
   </div>
-  <div id="models-accordion" class="accordion-content">
-    <button onclick="window.app.modelLoader.loadModel('basic_kitchen')"><i>📦</i> ШН36-50</button>
-    <button onclick="window.app.modelLoader.loadModel('cabinet')"><i>📦</i> ШН36-60</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen')"><i>📦</i> ШН46-50</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen1')"><i>📦</i> ШН46-60</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen_cabinets')"><i>📦</i> ШН75-15</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen_set')"><i>📦</i> ШН75-20</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen_model_2')"><i>📦</i> ШН75-30</button>
-    <button onclick="window.app.modelLoader.loadModel('modern_kitchen')"><i>📦</i> ШН75-40</button>
-    <button onclick="window.app.modelLoader.loadModel('living_room')"><i>📦</i> ШН75-45</button>
-    <button onclick="window.app.modelLoader.loadModel('new_kitchen')"><i>📦</i> ШН75-50</button>
-    <button onclick="window.app.modelLoader.loadModel('pigan')"><i>📦</i> ШН75-60</button>
-    <button onclick="window.app.modelLoader.loadModel('pobin')"><i>📦</i> ШН75-60-2</button>
+  
+  <!-- Поиск -->
+  <div class="search-box">
+    <input type="text" id="model-search" placeholder="🔍 Поиск моделей (например: 75, ШН, 60-2)..." autocomplete="off">
+    <span class="search-clear" id="search-clear">✕</span>
   </div>
-  <!-- <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')"><span>⚙️ Управление</span><span class="arrow">▼</span></div>
-  <div id="management-accordion" class="accordion-content">
-    <button onclick="window.app.selectionManager.deleteSelected()"><i>🗑️</i> Удалить выбранный</button>
-    <button onclick="window.app.modelManager.clearAllModels()"><i>🔥</i> Удалить все модели</button>
-    <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
-    <button onclick="window.app.selectionManager.enableWidthMode()"><i>📏</i> Изменить ширину</button>
-    <button onclick="window.app.selectionManager.resetObject()"><i>🔄</i> Сбросить объект</button>
-    <button onclick="window.app.selectionManager.alignToFloor()"><i>⬆️</i> Выровнять по полу</button>
-    <button onclick="window.app.modelManager.fixAllModelsHeight()"><i>⬆️⬆️</i> Выровнять все объекты</button>
-    <button onclick="window.app.modelManager.checkAllModelSizes()"><i>📊</i> Проверить размеры</button>
-    <button onclick="window.app.modelManager.normalizeAllModels()"><i>⚖️</i> Нормализовать размеры</button>
-    <button onclick="window.app.modelManager.recenterAllModels()"><i>🎯</i> Центрировать все модели</button>
-    <button onclick="window.app.modelManager.resetAllPositions()"><i>🔄</i> Сбросить позиции</button>
-    <button onclick="window.app.modelManager.forceModelsIntoRoom()"><i>🏠</i> Разместить все в комнате</button>
-    <button onclick="window.app.modelManager.shrinkOversizedModels()"><i>📉</i> Уменьшить большие модели</button>
-  </div> -->
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')"><span> Коллизии</span><span class="arrow">▼</span></div>
-  <div id="collisions-accordion" class="accordion-content">
-    <!-- <button onclick="window.app.collisionManager.togglePreciseCollisions()"><i>🎯</i><span id="collision-status">Точные столкновения: ВКЛ</span></button> -->
-    <button onclick="window.app.collisionManager.showColliders()"><i>👁️</i> Показать коллайдеры</button>
-    <button onclick="window.app.collisionManager.hideColliders()"><i>👁️‍🗨️</i> Скрыть коллайдеры</button>
+  
+  <!-- Кнопки управления аккордеонами -->
+  <div class="accordion-controls">
+    <button id="expand-all-btn">📂 Развернуть всё</button>
+    <button id="collapse-all-btn">📁 Свернуть всё</button>
   </div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')"><span> Информация</span><span class="arrow">▼</span></div>
-  <div id="info-accordion" class="accordion-content">
-    <button onclick="window.app.modelManager.toggleAllModelsSizes()"><i>📏</i><span id="sizes-toggle-text">Показать размеры всех моделей</span></button>
-    <button onclick="window.app.modelManager.showRoomInfo()"><i>🏠</i> Информация о комнате</button>
-    <button onclick="window.app.sceneManager.showRoomBoundaries()"><i>📐</i> Показать границы комнаты</button>
-    <button onclick="window.app.sceneManager.hideRoomBoundaries()"><i>🙈</i> Скрыть границы</button>
-    <!-- <button onclick="window.app.collisionManager.toggleCollisions()"><i>🚫</i> Вкл/Выкл коллизии</button> -->
-    <!-- <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
-  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'left')"><i>⬅️</i> К левой стене</button>
-  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'right')"><i>➡️</i> К правой стене</button>
-  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'back')"><i>⬆️</i> К задней стене</button>
-  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'front')"><i>⬇️</i> К передней стене</button>
-  <button onclick="console.log('Collisions enabled:', window.app.collisionManager.collisionsEnabled); window.app.collisionManager.collisionsEnabled = true; console.log('Now set to:', window.app.collisionManager.collisionsEnabled)">
-    <i>🔧</i> Проверить коллизии
-  </button> -->
+
+  <!-- СЕРИЯ ШН -->
+  <div class="section-category" data-category="shn">
+    <div class="section-title" data-accordion="shn-accordion">
+      <div class="title-left"><span></span> ШН (Шкафы навесные)</div>
+      <span class="badge" id="shn-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shn-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shn-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШНГ -->
+  <div class="section-category" data-category="shng">
+    <div class="section-title" data-accordion="shng-accordion">
+      <div class="title-left"><span></span> ШНГ (С грилем)</div>
+      <span class="badge" id="shng-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shng-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shng-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШНУ -->
+  <div class="section-category" data-category="shnu">
+    <div class="section-title" data-accordion="shnu-accordion">
+      <div class="title-left"><span></span> ШНУ (Угловые)</div>
+      <span class="badge" id="shnu-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shnu-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shnu-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШНУТ -->
+  <div class="section-category" data-category="shnut">
+    <div class="section-title" data-accordion="shnut-accordion">
+      <div class="title-left"><span></span> ШНУТ (Трапециевидные)</div>
+      <span class="badge" id="shnut-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shnut-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shnut-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШП -->
+  <div class="section-category" data-category="shp">
+    <div class="section-title" data-accordion="shp-accordion">
+      <div class="title-left"><span></span> ШП (Подвесные)</div>
+      <span class="badge" id="shp-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shp-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shp-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШПД -->
+  <div class="section-category" data-category="shpd">
+    <div class="section-title" data-accordion="shpd-accordion">
+      <div class="title-left"><span></span> ШПД (С декором)</div>
+      <span class="badge" id="shpd-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shpd-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shpd-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШС -->
+  <div class="section-category" data-category="shs">
+    <div class="section-title" data-accordion="shs-accordion">
+      <div class="title-left"><span></span> ШС (Секционные)</div>
+      <span class="badge" id="shs-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shs-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shs-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШСД -->
+  <div class="section-category" data-category="shsd">
+    <div class="section-title" data-accordion="shsd-accordion">
+      <div class="title-left"><span></span> ШСД (Секционные с декором)</div>
+      <span class="badge" id="shsd-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shsd-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shsd-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШСК -->
+  <div class="section-category" data-category="shsk">
+    <div class="section-title" data-accordion="shsk-accordion">
+      <div class="title-left"><span></span> ШСК (Колонки)</div>
+      <span class="badge" id="shsk-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shsk-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shsk-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШСМ -->
+  <div class="section-category" data-category="shsm">
+    <div class="section-title" data-accordion="shsm-accordion">
+      <div class="title-left"><span></span> ШСМ (Модульные)</div>
+      <span class="badge" id="shsm-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shsm-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shsm-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШСУ -->
+  <div class="section-category" data-category="shsu">
+    <div class="section-title" data-accordion="shsu-accordion">
+      <div class="title-left"><span></span> ШСУ (Угловые секционные)</div>
+      <span class="badge" id="shsu-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shsu-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shsu-grid"></div>
+    </div>
+  </div>
+
+  <!-- СЕРИЯ ШСШ -->
+  <div class="section-category" data-category="shssh">
+    <div class="section-title" data-accordion="shssh-accordion">
+      <div class="title-left"><span></span> ШСШ (С шиной)</div>
+      <span class="badge" id="shssh-count">0</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="shssh-accordion" class="accordion-content">
+      <div class="buttons-grid" id="shssh-grid"></div>
+    </div>
+  </div>
+
+  <div class="no-results" id="no-results">🔍 Ничего не найдено</div>
+
+  <!-- Секции управления -->
+  <div class="section-category" data-category="collisions">
+    <div class="section-title" data-accordion="collisions-accordion">
+      <div class="title-left"><span>🛡️</span> Коллизии</div>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="collisions-accordion" class="accordion-content">
+      <div class="buttons-grid">
+        <button onclick="window.app.collisionManager.showColliders()"><i>👁️</i><span>Показать коллайдеры</span></button>
+        <button onclick="window.app.collisionManager.hideColliders()"><i>👁️‍🗨️</i><span>Скрыть коллайдеры</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-category" data-category="info">
+    <div class="section-title" data-accordion="info-accordion">
+      <div class="title-left"><span>ℹ️</span> Информация</div>
+      <span class="arrow">▼</span>
+    </div>
+    <div id="info-accordion" class="accordion-content">
+      <div class="buttons-grid">
+        <button onclick="window.app.modelManager.toggleAllModelsSizes()"><i>📏</i><span>Показать размеры</span></button>
+        <button onclick="window.app.modelManager.showRoomInfo()"><i>🏠</i><span>О комнате</span></button>
+        <button onclick="window.app.sceneManager.showRoomBoundaries()"><i>📐</i><span>Границы комнаты</span></button>
+        <button onclick="window.app.sceneManager.hideRoomBoundaries()"><i>🙈</i><span>Скрыть границы</span></button>
+      </div>
+    </div>
   </div>
 </div>
-
-
 
 <!-- Контекстное меню -->
 <div id="context-menu">
@@ -509,10 +613,13 @@
   <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #ff7b72;"><i>🗑️</i> Удалить объект</div>
 </div>
 
+<div class="width-control" id="width-control-panel">
+  <span>Изменить ширину</span>
+  <input type="range" id="width-slider" min="0.2" max="3" step="0.01">
+  <button onclick="window.app.selectionManager.applyWidthChange()">Применить</button>
+</div>
 
-<div class="width-control" id="width-control-panel"><span>Изменить ширину</span><input type="range" id="width-slider" min="0.2" max="3" step="0.01"><button onclick="window.app.selectionManager.applyWidthChange()">Применить</button></div>
-
-<!-- Скрипты Three.js и модули (оригинальные, без изменений функционала) -->
+<!-- Скрипты -->
 <script src="https://unpkg.com/three@0.90.0/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://unpkg.com/three@0.90.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -543,45 +650,200 @@
 <script src="main.js"></script>
 
 <script>
-  // Дополнительно: аккордеон и статус (стилизация)
-  if(window.app && window.app.uiManager) {
-    const origToggle = window.app.uiManager.toggleAccordion;
-    window.app.uiManager.toggleAccordion = function(id) {
-      if(origToggle) origToggle.call(window.app.uiManager, id);
-      const el = document.getElementById(id);
-      const parentDiv = el?.parentElement?.querySelector('.section-title');
-      if(parentDiv && el) {
-        if(el.classList.contains('expanded')) parentDiv.classList.add('expanded');
-        else parentDiv.classList.remove('expanded');
-      }
-    };
-    document.querySelectorAll('.section-title').forEach(title => {
-      const accordId = title.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-      if(accordId && document.getElementById(accordId)?.classList.contains('expanded')) title.classList.add('expanded');
-    });
-  }
+// Данные моделей
+const modelsData = {
+  shn: ['ШН36-50', 'ШН36-60', 'ШН46-50', 'ШН46-60', 'ШН75-15', 'ШН75-20', 'ШН75-30', 'ШН75-40', 'ШН75-45', 'ШН75-50', 'ШН75-60', 'ШН75-60-2', 'ШН92-15', 'ШН92-20', 'ШН92-30', 'ШН92-40', 'ШН92-45', 'ШН92-50', 'ШН92-60', 'ШН92-60-2'],
+  shng: ['ШНГ36-50', 'ШНГ36-60', 'ШНГ46-50', 'ШНГ46-60'],
+  shnu: ['ШНУ75-70', 'ШНУ75-80', 'ШНУ75-90', 'ШНУ92-70', 'ШНУ92-80', 'ШНУ92-90'],
+  shnut: ['ШНУТ75_30Л', 'ШНУТ75_30П', 'ШНУТ92_30Л', 'ШНУТ92_30П'],
+  shp: ['ШП21_40-2Ш', 'ШП21_40-5П', 'ШП21_60-2Ш', 'ШП21_60-5П', 'ШП23_40-2ш', 'ШП23_40-5П', 'ШП23_60-2Ш', 'ШП23_60-5П'],
+  shpd: ['ШПД21_60', 'ШПД21_60-М', 'ШПД21_60-Ш', 'ШПД23_60', 'ШПД23_60-М', 'ШПД23_60-Ш'],
+  shs: ['ШС15', 'ШС20', 'ШС30', 'ШС40', 'ШС45', 'ШС50', 'ШС60', 'ШС60-2'],
+  shsd: ['ШСД60'],
+  shsk: ['ШСК15', 'ШСК20', 'ШСК30', 'ШСК40'],
+  shsm: ['ШСМ60', 'ШСМ60_2', 'ШСМ70_2', 'ШСМ80_2', 'ШСМ90_2'],
+  shsu: ['ШСУ100', 'ШСУ110', 'ШСУ120', 'ШСУМ90', 'ШСУМ100', 'ШСУМ110', 'ШСУМ120', 'ШСУТ30П'],
+  shssh: ['ШСШ40-1', 'ШСШ40-2', 'ШСШ40-3.1', 'ШСШ40-3.2', 'ШСШ40-4', 'ШСШ45-3.1', 'ШСШ45-3.2', 'ШСШ45-4', 'ШСШ50-1', 'ШСШ50-2', 'ШСШ50-3.1', 'ШСШ50-3.2', 'ШСШ50-4', 'ШСШ60-1', 'ШСШ60-2', 'ШСШ60-3.1', 'ШСШ60-3.2', 'ШСШ60-4']
+};
+
+// Эмодзи для каждой серии
+const seriesIcons = {
+  shn: '📦', shng: '🔥', shnu: '🔄', shnut: '📐', shp: '⬇️', shpd: '✨',
+  shs: '🧱', shsd: '🎨', shsk: '📏', shsm: '🧩', shsu: '🔄', shssh: '⚙️'
+};
+
+// Функция для подсветки текста
+function highlightText(text, query) {
+  if (!query || query === '') return text;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return text.replace(regex, '<mark>$1</mark>');
+}
+
+// Функция создания кнопок
+function buildButtons(seriesId, models, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
   
-  // Счётчик объектов обновляем (красивый статус)
-  function updateObjectsCountUI() {
-    const count = window.app?.modelManager?.models?.length || 0;
-    const span = document.getElementById('objects-count');
-    if(span) span.innerText = count;
-  }
-  setInterval(updateObjectsCountUI, 300);
+  // Сохраняем оригинальные названия для фильтрации
+  models.forEach(model => {
+    const btn = document.createElement('button');
+    btn.className = 'model-item';
+    btn.setAttribute('data-model-name', model);
+    btn.setAttribute('data-original-name', model);
+    const icon = seriesIcons[seriesId] || '📦';
+    btn.innerHTML = `<i>${icon}</i><span>${model}</span>`;
+    btn.onclick = () => window.app.modelLoader.loadModel(model);
+    container.appendChild(btn);
+  });
   
-  // Фиксация статуса коллизий
-  if(window.app && window.app.collisionManager) {
-    const toggleBtn = document.getElementById('collision-status');
-    if(toggleBtn && window.app.collisionManager.preciseMode !== undefined) {
-      const updateText = () => { toggleBtn.innerText = `Точные столкновения: ${window.app.collisionManager.preciseMode ? 'ВКЛ' : 'ВЫКЛ'}`; };
-      updateText();
-      const origToggle = window.app.collisionManager.togglePreciseCollisions;
-      if(origToggle) window.app.collisionManager.togglePreciseCollisions = function() {
-        origToggle.call(window.app.collisionManager);
-        updateText();
+  const badge = document.getElementById(`${seriesId}-count`);
+  if (badge) badge.textContent = models.length;
+}
+
+// Функция обновления подсветки при поиске
+function updateHighlighting(query) {
+  document.querySelectorAll('.model-item').forEach(item => {
+    const originalName = item.getAttribute('data-original-name');
+    const icon = item.querySelector('i').innerHTML;
+    if (originalName) {
+      const highlightedName = highlightText(originalName, query);
+      item.querySelector('span').innerHTML = highlightedName;
+    }
+  });
+}
+
+// Инициализация всех кнопок
+buildButtons('shn', modelsData.shn, 'shn-grid');
+buildButtons('shng', modelsData.shng, 'shng-grid');
+buildButtons('shnu', modelsData.shnu, 'shnu-grid');
+buildButtons('shnut', modelsData.shnut, 'shnut-grid');
+buildButtons('shp', modelsData.shp, 'shp-grid');
+buildButtons('shpd', modelsData.shpd, 'shpd-grid');
+buildButtons('shs', modelsData.shs, 'shs-grid');
+buildButtons('shsd', modelsData.shsd, 'shsd-grid');
+buildButtons('shsk', modelsData.shsk, 'shsk-grid');
+buildButtons('shsm', modelsData.shsm, 'shsm-grid');
+buildButtons('shsu', modelsData.shsu, 'shsu-grid');
+buildButtons('shssh', modelsData.shssh, 'shssh-grid');
+
+// Общее количество моделей
+const totalModels = Object.values(modelsData).reduce((a, b) => a + b.length, 0);
+document.getElementById('total-models-count').textContent = totalModels + ' моделей';
+
+// Функции аккордеонов
+function initAccordions() {
+  const sections = document.querySelectorAll('.section-title[data-accordion]');
+  sections.forEach(section => {
+    const accordionId = section.getAttribute('data-accordion');
+    const content = document.getElementById(accordionId);
+    if (content) {
+      // Все аккордеоны закрыты по умолчанию
+      content.classList.remove('expanded');
+      section.classList.remove('expanded');
+      
+      section.onclick = (e) => {
+        e.stopPropagation();
+        content.classList.toggle('expanded');
+        section.classList.toggle('expanded');
       };
     }
+  });
+}
+
+// Развернуть всё
+function expandAll() {
+  document.querySelectorAll('.accordion-content').forEach(content => {
+    content.classList.add('expanded');
+  });
+  document.querySelectorAll('.section-title[data-accordion]').forEach(section => {
+    section.classList.add('expanded');
+  });
+}
+
+// Свернуть всё
+function collapseAll() {
+  document.querySelectorAll('.accordion-content').forEach(content => {
+    content.classList.remove('expanded');
+  });
+  document.querySelectorAll('.section-title[data-accordion]').forEach(section => {
+    section.classList.remove('expanded');
+  });
+}
+
+// Поиск моделей с фильтрацией секций
+function initSearch() {
+  const searchInput = document.getElementById('model-search');
+  const searchClear = document.getElementById('search-clear');
+  const noResults = document.getElementById('no-results');
+  
+  function filterModels() {
+    const query = searchInput.value.toLowerCase().trim();
+    let totalVisible = 0;
+    
+    // Обновляем подсветку текста
+    updateHighlighting(query);
+    
+    // Фильтруем модели и считаем видимые в каждой категории
+    const categories = document.querySelectorAll('.section-category');
+    
+    categories.forEach(category => {
+      let visibleInCategory = 0;
+      const items = category.querySelectorAll('.model-item');
+      
+      items.forEach(item => {
+        const modelName = item.getAttribute('data-original-name').toLowerCase();
+        if (query === '' || modelName.includes(query)) {
+          item.classList.remove('hidden');
+          visibleInCategory++;
+          totalVisible++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+      
+      // Скрываем всю категорию, если в ней нет видимых моделей
+      if (query !== '') {
+        if (visibleInCategory === 0 && category.querySelectorAll('.model-item').length > 0) {
+          category.classList.add('hidden-category');
+        } else {
+          category.classList.remove('hidden-category');
+        }
+      } else {
+        category.classList.remove('hidden-category');
+      }
+    });
+    
+    // Показываем/скрываем сообщение "ничего не найдено"
+    const hasAnyVisible = totalVisible > 0;
+    noResults.style.display = (!hasAnyVisible && query !== '') ? 'block' : 'none';
+    searchClear.style.display = query !== '' ? 'flex' : 'none';
+    
+    // Если есть поиск, разворачиваем все секции для удобства
+    if (query !== '' && totalVisible > 0) {
+      expandAll();
+    }
   }
+  
+  searchInput.addEventListener('input', filterModels);
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    filterModels();
+  });
+}
+
+// Инициализация
+initAccordions();
+initSearch();
+document.getElementById('expand-all-btn').onclick = expandAll;
+document.getElementById('collapse-all-btn').onclick = collapseAll;
+
+// Обновление счётчика объектов
+function updateObjectsCountUI() {
+  const count = window.app?.modelManager?.models?.length || 0;
+  const span = document.getElementById('objects-count');
+  if(span) span.innerText = count;
+}
+setInterval(updateObjectsCountUI, 500);
 </script>
 </body>
 </html>
