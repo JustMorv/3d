@@ -10,22 +10,21 @@ const ModelLoader = {
   MODEL_MAX_HEIGHT: 250,
 
   modelMap: {
-    'basic_kitchen': 'basic_kitchen_cabinets_and_counter.glb',
-    'cabinet': 'cabinet.glb',
-    'hallway': 'Hallway7.glb',
-    'kitchen': 'jcjc.glb',
-    'kitchen1': 'kitchen1.glb',
-    'kitchen2': 'Kitchen2.glb',
-    'kitchen_cabinets': 'kitchen_cabinets.glb',
-    'kitchen_set': 'kitchen_design_set_v.001.glb',
-    'kitchen_model_2': 'kitchen_model_22.glb',
-    'modern_kitchen': 'modern_kitchen.glb',
-    'living_room': 'ШСШ40-2.glb',
-    'new_kitchen': 'newchiken22.glb',
-    'pigan': 'pigan.glb',
-    'pobin': 'pobinByLing.glb'
+    'basic_kitchen': 'ШН36-50.glb',
+    'cabinet': 'ШН36-60.glb',
+    'hallway': 'ШН46-50.glb',
+    'kitchen': 'ШН46-60.glb',
+    'kitchen1': 'ШН75-15.glb',
+    'kitchen2': 'ШН75-20.glb',
+    'kitchen_cabinets': 'ШН75-30.glb',
+    'kitchen_set': 'ШН75-40.glb',
+    'kitchen_model_2': 'ШН75-45.glb',
+    'modern_kitchen': 'ШН75-50.glb',
+    'living_room': 'ШН75-60.glb',
+    'new_kitchen': 'ШН75-60-2.glb',
+    'pigan': 'ШН92-15.glb',
+    'pobin': 'ШН92-15.glb'
   },
-
   init: function(sceneManager) {
     this.sceneManager = sceneManager;
     this.loaders.gltf = new THREE.GLTFLoader();
@@ -39,7 +38,7 @@ const ModelLoader = {
       return;
     }
 
-    const modelPath = '../models/kitchen/' + this.modelMap[modelType];
+    const modelPath = '../models/3dModels/3Д модели/' + this.modelMap[modelType];
     DebugHelper.log('Загружаем модель:', modelPath);
 
     this.loaders.gltf.load(
@@ -175,12 +174,7 @@ onModelLoaded: function(gltf, modelType) {
     window.app.collisionManager.updateObjectHalfSize(modelGroup);
   }
   
-  // Для отладки - показываем коллайдер
-  if (window.app && window.app.collisionManager) {
-    setTimeout(() => {
-      window.app.collisionManager.showColliders();
-    }, 500);
-  }
+
   
   console.log('Модель загружена:', modelType);
   EventManager.emit('model-loaded', { model: modelGroup, type: modelType });
@@ -213,21 +207,21 @@ onModelLoaded: function(gltf, modelType) {
 
   getTargetWidth: function(modelType) {
     const specialSizes = {
-    'kitchen_cabinets': 280,
+    'kitchen_cabinets': 100,
     'new_kitchen': 100,
-    'modern_kitchen': 120,
-    'kitchen': 400,
-    'kitchen1': 400,
-    'kitchen2': 200,
-    'kitchen_cabinets2': 380,
+    'modern_kitchen': 100,
+    'kitchen': 100,
+    'kitchen1': 100,
+    'kitchen2': 100,
+    'kitchen_cabinets2': 100,
     'kitchen_set': 100,
-    'living_room': 60,  // ← УМЕНЬШИЛ с 100 до 60, чтобы модель была меньше
-    'hallway': 160,
-    'basic_kitchen': 400,
-    'cabinet': 320,
-    'kitchen_model_2': 480,
-    'pigan': 150,
-    'pobin': 150
+    'living_room': 100, 
+    'hallway': 100,
+    'basic_kitchen': 100,
+    'cabinet': 100,
+    'kitchen_model_2': 100,
+    'pigan': 100,
+    'pobin': 100
   };
   
   return specialSizes[modelType] || 150;
@@ -237,18 +231,18 @@ onModelLoaded: function(gltf, modelType) {
     const specialScales = {
       'living_room': 0.6,
       'kitchen_cabinets': 0.6,
-      'new_kitchen': 0.4,
-      'modern_kitchen': 0.4,
-      'kitchen': 0.65,
-      'kitchen1': 0.65,
-      'kitchen2': 0.65,
-      'kitchen_set': 0.4,
-      'hallway': 0.7,
-      'basic_kitchen': 0.7,
-      'cabinet': 0.8,
-      'kitchen_model_2': 0.65,
-      'pigan': 0.7,
-      'pobin': 0.7
+      'new_kitchen': 0.6,
+      'modern_kitchen': 0.6,
+      'kitchen': 0.6,
+      'kitchen1': 0.6,
+      'kitchen2': 0.6,
+      'kitchen_set': 0.6,
+      'hallway': 0.6,
+      'basic_kitchen': 0.6,
+      'cabinet': 0.6,
+      'kitchen_model_2': 0.6,
+      'pigan': 0.6,
+      'pobin': 0.6
     };
     
     return specialScales[modelType] || 0.6;

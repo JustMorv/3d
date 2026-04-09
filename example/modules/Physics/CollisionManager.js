@@ -8,7 +8,7 @@ const CollisionManager = {
   
   enablePreciseCollisions: true,
   showDebugColliders: false,
-  collisionsEnabled: true, // ДОЛЖНО БЫТЬ true
+  collisionsEnabled: true, 
   
   
   complexShapes: {},

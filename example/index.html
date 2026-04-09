@@ -63,6 +63,7 @@
     .menu-title {
       font-size: 22px;
       font-weight: 700;
+      margin-left: 20px;
       background: linear-gradient(135deg, #1e2f5e, #4a6ee0, #8a2be2);
       -webkit-background-clip: text;
       background-clip: text;
@@ -76,10 +77,6 @@
       letter-spacing: -0.3px;
     }
 
-    .menu-title::before {
-      content: "✨";
-      font-size: 24px;
-    }
 
     .section-title {
       margin: 20px 0 10px;
@@ -442,24 +439,25 @@
 
 <!-- Главное меню (функционал полностью сохранён, только стили обновлены) -->
 <div id="main-menu">
-  <div class="menu-title">🏠 3D Редактор кухни</div>
+  <div class="menu-title">🏠 3D Редактор</div>
   <div class="section-title" onclick="window.app.uiManager.toggleAccordion('models-accordion')">
-    <span>🎨 3D Модели кухни</span><span class="arrow">▼</span>
+    <span> 3D Модели кухни</span><span class="arrow">▼</span>
   </div>
   <div id="models-accordion" class="accordion-content">
-    <button onclick="window.app.modelLoader.loadModel('basic_kitchen')"><i>🍽️</i> Базовая кухня</button>
-    <button onclick="window.app.modelLoader.loadModel('cabinet')"><i>🗄️</i> Кухонный шкаф</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen')"><i>🏠</i> Кухня</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen1')"><i>🍳</i> Кухня 1</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen_cabinets')"><i>🚪</i> Кухонные шкафы</button>
-    <button onclick="window.app.modelLoader.loadModel('kitchen_model_2')"><i>🍴</i> Кухонная модель 2</button>
-    <button onclick="window.app.modelLoader.loadModel('modern_kitchen')"><i>🌟</i> Современная кухня</button>
-    <button onclick="window.app.modelLoader.loadModel('living_room')"><i>🛋️</i> Гостиная</button>
-    <button onclick="window.app.modelLoader.loadModel('new_kitchen')"><i>🆕</i> Новая кухня</button>
-    <button onclick="window.app.modelLoader.loadModel('pigan')"><i>🐷</i> Пиган кухня</button>
-    <button onclick="window.app.modelLoader.loadModel('pobin')"><i>🏡</i> Побин кухня</button>
+    <button onclick="window.app.modelLoader.loadModel('basic_kitchen')"><i>📦</i> ШН36-50</button>
+    <button onclick="window.app.modelLoader.loadModel('cabinet')"><i>📦</i> ШН36-60</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen')"><i>📦</i> ШН46-50</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen1')"><i>📦</i> ШН46-60</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen_cabinets')"><i>📦</i> ШН75-15</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen_set')"><i>📦</i> ШН75-20</button>
+    <button onclick="window.app.modelLoader.loadModel('kitchen_model_2')"><i>📦</i> ШН75-30</button>
+    <button onclick="window.app.modelLoader.loadModel('modern_kitchen')"><i>📦</i> ШН75-40</button>
+    <button onclick="window.app.modelLoader.loadModel('living_room')"><i>📦</i> ШН75-45</button>
+    <button onclick="window.app.modelLoader.loadModel('new_kitchen')"><i>📦</i> ШН75-50</button>
+    <button onclick="window.app.modelLoader.loadModel('pigan')"><i>📦</i> ШН75-60</button>
+    <button onclick="window.app.modelLoader.loadModel('pobin')"><i>📦</i> ШН75-60-2</button>
   </div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')"><span>⚙️ Управление</span><span class="arrow">▼</span></div>
+  <!-- <div class="section-title" onclick="window.app.uiManager.toggleAccordion('management-accordion')"><span>⚙️ Управление</span><span class="arrow">▼</span></div>
   <div id="management-accordion" class="accordion-content">
     <button onclick="window.app.selectionManager.deleteSelected()"><i>🗑️</i> Удалить выбранный</button>
     <button onclick="window.app.modelManager.clearAllModels()"><i>🔥</i> Удалить все модели</button>
@@ -474,48 +472,32 @@
     <button onclick="window.app.modelManager.resetAllPositions()"><i>🔄</i> Сбросить позиции</button>
     <button onclick="window.app.modelManager.forceModelsIntoRoom()"><i>🏠</i> Разместить все в комнате</button>
     <button onclick="window.app.modelManager.shrinkOversizedModels()"><i>📉</i> Уменьшить большие модели</button>
-  </div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')"><span>🎯 Коллизии</span><span class="arrow">▼</span></div>
+  </div> -->
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('collisions-accordion')"><span> Коллизии</span><span class="arrow">▼</span></div>
   <div id="collisions-accordion" class="accordion-content">
-    <button onclick="window.app.collisionManager.togglePreciseCollisions()"><i>🎯</i><span id="collision-status">Точные столкновения: ВКЛ</span></button>
+    <!-- <button onclick="window.app.collisionManager.togglePreciseCollisions()"><i>🎯</i><span id="collision-status">Точные столкновения: ВКЛ</span></button> -->
     <button onclick="window.app.collisionManager.showColliders()"><i>👁️</i> Показать коллайдеры</button>
     <button onclick="window.app.collisionManager.hideColliders()"><i>👁️‍🗨️</i> Скрыть коллайдеры</button>
   </div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('placement-accordion')"><span>📍 Оптимальное размещение</span><span class="arrow">▼</span></div>
-  <div id="placement-accordion" class="accordion-content">
-    <button onclick="window.app.modelManager.placeSelectedInCenter()"><i>🎯</i> Центрировать выбранное</button>
-    <button onclick="window.app.modelManager.autoArrangeModels()"><i>🔀</i> Авторасстановка всех моделей</button>
-  </div>
-  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')"><span>📊 Информация</span><span class="arrow">▼</span></div>
+  <div class="section-title" onclick="window.app.uiManager.toggleAccordion('info-accordion')"><span> Информация</span><span class="arrow">▼</span></div>
   <div id="info-accordion" class="accordion-content">
     <button onclick="window.app.modelManager.toggleAllModelsSizes()"><i>📏</i><span id="sizes-toggle-text">Показать размеры всех моделей</span></button>
     <button onclick="window.app.modelManager.showRoomInfo()"><i>🏠</i> Информация о комнате</button>
     <button onclick="window.app.sceneManager.showRoomBoundaries()"><i>📐</i> Показать границы комнаты</button>
     <button onclick="window.app.sceneManager.hideRoomBoundaries()"><i>🙈</i> Скрыть границы</button>
-    <button onclick="window.app.collisionManager.toggleCollisions()"><i>🚫</i> Вкл/Выкл коллизии</button>
-    <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
-<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'left')"><i>⬅️</i> К левой стене</button>
-<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'right')"><i>➡️</i> К правой стене</button>
-<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'back')"><i>⬆️</i> К задней стене</button>
-<button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'front')"><i>⬇️</i> К передней стене</button>
-<button onclick="console.log('Collisions enabled:', window.app.collisionManager.collisionsEnabled); window.app.collisionManager.collisionsEnabled = true; console.log('Now set to:', window.app.collisionManager.collisionsEnabled)">
-  <i>🔧</i> Проверить коллизии
-</button>
+    <!-- <button onclick="window.app.collisionManager.toggleCollisions()"><i>🚫</i> Вкл/Выкл коллизии</button> -->
+    <!-- <button onclick="window.app.wallManager.snapToWalls()"><i>🧱</i> Пристыковать все к стенам</button>
+  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'left')"><i>⬅️</i> К левой стене</button>
+  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'right')"><i>➡️</i> К правой стене</button>
+  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'back')"><i>⬆️</i> К задней стене</button>
+  <button onclick="if(window.app.selectionManager.selectedObject) window.app.wallManager.snapToSpecificWall(window.app.selectionManager.selectedObject, 'front')"><i>⬇️</i> К передней стене</button>
+  <button onclick="console.log('Collisions enabled:', window.app.collisionManager.collisionsEnabled); window.app.collisionManager.collisionsEnabled = true; console.log('Now set to:', window.app.collisionManager.collisionsEnabled)">
+    <i>🔧</i> Проверить коллизии
+  </button> -->
   </div>
 </div>
 
-<!-- 3D КОМПАС (BLENDER стиль, динамическое вращение) -->
-<div id="blender-compass">
-  <div class="compass-axes" id="compass-axes-container">
-    <div class="axis axis-x left" data-view="left" title="Вид слева"></div>
-    <div class="axis axis-x right" data-view="right" title="Вид справа"></div>
-    <div class="axis axis-y front" data-view="front" title="Вид спереди"></div>
-    <div class="axis axis-y back" data-view="back" title="Вид сзади"></div>
-    <div class="axis axis-z top" data-view="top" title="Вид сверху"></div>
-    <div class="axis axis-z bottom" data-view="bottom" title="Вид снизу"></div>
-    <div class="axis-center" title="Сбросить перспективу"></div>
-  </div>
-</div>
+
 
 <!-- Контекстное меню -->
 <div id="context-menu">
@@ -561,65 +543,6 @@
 <script src="main.js"></script>
 
 <script>
-  // ========== РАСШИРЕННЫЙ КОМПАС С ДИНАМИЧЕСКИМ ПОВОРОТОМ (как в Blender) ==========
-  (function() {
-    // ждём пока cameraController инициализируется
-    function initCompassInteractions() {
-      const axes = document.querySelectorAll('.axis, .axis-center');
-      axes.forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const view = el.getAttribute('data-view');
-          if (view && window.app && window.app.cameraController) {
-            if (view === 'top') window.app.cameraController.setView('top');
-            else if (view === 'bottom') window.app.cameraController.setView('bottom');
-            else if (view === 'left') window.app.cameraController.setView('left');
-            else if (view === 'right') window.app.cameraController.setView('right');
-            else if (view === 'front') window.app.cameraController.setView('front');
-            else if (view === 'back') window.app.cameraController.setView('back');
-          } else if (el.classList.contains('axis-center') && window.app && window.app.cameraController) {
-            window.app.cameraController.resetView();
-          }
-        });
-      });
-      
-      // ДИНАМИЧЕСКОЕ ВРАЩЕНИЕ КОМПАСА синхронно с камерой (Blender style)
-      function updateCompassRotation() {
-        const compassElem = document.getElementById('blender-compass');
-        if (!compassElem) return;
-        const camera = window.app?.cameraController?.camera;
-        if (!camera) return;
-        // Получаем углы камеры в горизонтальной плоскости
-        const direction = camera.getWorldDirection(new THREE.Vector3());
-        const angleY = Math.atan2(direction.x, direction.z);
-        const angleDeg = angleY * (180 / Math.PI);
-        // Вращаем компас относительно оси Y (только азимут)
-        compassElem.style.transform = `rotate(${-angleDeg}deg)`;
-        // Небольшой эффект инвертирования X при взгляде снизу? Для эстетики
-        const isUpside = camera.position.y < 0;
-        if(isUpside) compassElem.style.opacity = '0.85';
-        else compassElem.style.opacity = '1';
-      }
-      
-      if(window.app && window.app.cameraController) {
-        setInterval(() => { updateCompassRotation(); }, 50);
-        // Также обновляем при рендере
-        const origUpdate = window.app.cameraController.update;
-        if(origUpdate) {
-          window.app.cameraController.update = function() {
-            origUpdate.call(window.app.cameraController);
-            updateCompassRotation();
-          };
-        }
-      } else {
-        setTimeout(initCompassInteractions, 500);
-      }
-    }
-    
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCompassInteractions);
-    else initCompassInteractions();
-  })();
-  
   // Дополнительно: аккордеон и статус (стилизация)
   if(window.app && window.app.uiManager) {
     const origToggle = window.app.uiManager.toggleAccordion;
