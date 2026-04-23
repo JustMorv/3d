@@ -185,9 +185,7 @@ onModelLoaded: function(gltf, modelType) {
   // После масштабирования - ставим на пол
   const afterScaleBox = new THREE.Box3().setFromObject(modelGroup);
   const afterScaleMinY = afterScaleBox.min.y;
-  
-  console.log('minY после масштабирования:', afterScaleMinY);
-  
+
   // Поднимаем на пол
   modelGroup.position.y = -afterScaleMinY;
   

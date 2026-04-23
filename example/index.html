@@ -36,6 +36,93 @@
       background: #4a6ee0;
     }
 
+    /* СТИЛИ ДЛЯ КОЛЬЦА ВРАЩЕНИЯ */
+    .rotation-circle {
+      position: fixed;
+      border-radius: 50%;
+      border: 3px dashed rgba(74, 110, 224, 0.8);
+      pointer-events: none;
+      z-index: 1000;
+      transition: opacity 0.2s ease;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3), inset 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    
+    .rotation-handle {
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      background: #4a6ee0;
+      border-radius: 50%;
+      cursor: grab;
+      z-index: 1001;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      border: 2px solid white;
+      pointer-events: auto;
+    }
+    
+    .rotation-handle:active {
+      cursor: grabbing;
+    }
+    
+    /* СТИЛИ ДЛЯ СТРЕЛКИ ПОДЪЕМА */
+    .elevator-arrow {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4a6ee0, #7c3aed);
+      border-radius: 50%;
+      cursor: ns-resize;
+      z-index: 1001;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: transform 0.1s ease;
+      pointer-events: auto;
+    }
+    
+    .elevator-arrow:active {
+      transform: scale(0.95);
+      cursor: ns-resize;
+    }
+    
+    .elevator-arrow::before {
+      content: "⬆️";
+      font-size: 20px;
+    }
+
+    /* КНОПКА ВКЛ/ВЫКЛ ВРАЩЕНИЯ КАМЕРЫ */
+    #camera-control-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 100px;
+      width: 48px;
+      height: 48px;
+      background: rgba(74, 110, 224, 0.9);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 150;
+      backdrop-filter: blur(8px);
+      border: 2px solid white;
+      transition: 0.3s cubic-bezier(0.2, 0.9, 0.6, 1.1);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      color: white;
+      font-weight: bold;
+    }
+    #camera-control-btn:hover {
+      transform: scale(1.1);
+      background: #2c3e66;
+    }
+    #camera-control-btn.disabled {
+      background: #ff4444;
+    }
+
     /* ===== ГЛАВНОЕ МЕНЮ ===== */
     #main-menu {
       position: fixed;
@@ -430,7 +517,7 @@
   <!-- СЕРИЯ ШН -->
   <div class="section-category" data-category="shn">
     <div class="section-title" data-accordion="shn-accordion">
-      <div class="title-left"><span></span> ШН (Шкафы навесные)</div>
+      <div class="title-left"><span>📦</span> ШН (Шкафы навесные)</div>
       <span class="badge" id="shn-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -442,7 +529,7 @@
   <!-- СЕРИЯ ШНГ -->
   <div class="section-category" data-category="shng">
     <div class="section-title" data-accordion="shng-accordion">
-      <div class="title-left"><span></span> ШНГ (С грилем)</div>
+      <div class="title-left"><span>🔥</span> ШНГ (С грилем)</div>
       <span class="badge" id="shng-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -454,7 +541,7 @@
   <!-- СЕРИЯ ШНУ -->
   <div class="section-category" data-category="shnu">
     <div class="section-title" data-accordion="shnu-accordion">
-      <div class="title-left"><span></span> ШНУ (Угловые)</div>
+      <div class="title-left"><span>🔄</span> ШНУ (Угловые)</div>
       <span class="badge" id="shnu-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -466,7 +553,7 @@
   <!-- СЕРИЯ ШНУТ -->
   <div class="section-category" data-category="shnut">
     <div class="section-title" data-accordion="shnut-accordion">
-      <div class="title-left"><span></span> ШНУТ (Трапециевидные)</div>
+      <div class="title-left"><span>📐</span> ШНУТ (Трапециевидные)</div>
       <span class="badge" id="shnut-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -478,7 +565,7 @@
   <!-- СЕРИЯ ШП -->
   <div class="section-category" data-category="shp">
     <div class="section-title" data-accordion="shp-accordion">
-      <div class="title-left"><span></span> ШП (Подвесные)</div>
+      <div class="title-left"><span>⬇️</span> ШП (Подвесные)</div>
       <span class="badge" id="shp-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -490,7 +577,7 @@
   <!-- СЕРИЯ ШПД -->
   <div class="section-category" data-category="shpd">
     <div class="section-title" data-accordion="shpd-accordion">
-      <div class="title-left"><span></span> ШПД (С декором)</div>
+      <div class="title-left"><span>✨</span> ШПД (С декором)</div>
       <span class="badge" id="shpd-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -502,7 +589,7 @@
   <!-- СЕРИЯ ШС -->
   <div class="section-category" data-category="shs">
     <div class="section-title" data-accordion="shs-accordion">
-      <div class="title-left"><span></span> ШС (Секционные)</div>
+      <div class="title-left"><span>🧱</span> ШС (Секционные)</div>
       <span class="badge" id="shs-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -514,7 +601,7 @@
   <!-- СЕРИЯ ШСД -->
   <div class="section-category" data-category="shsd">
     <div class="section-title" data-accordion="shsd-accordion">
-      <div class="title-left"><span></span> ШСД (Секционные с декором)</div>
+      <div class="title-left"><span>🎨</span> ШСД (Секционные с декором)</div>
       <span class="badge" id="shsd-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -526,7 +613,7 @@
   <!-- СЕРИЯ ШСК -->
   <div class="section-category" data-category="shsk">
     <div class="section-title" data-accordion="shsk-accordion">
-      <div class="title-left"><span></span> ШСК (Колонки)</div>
+      <div class="title-left"><span>📏</span> ШСК (Колонки)</div>
       <span class="badge" id="shsk-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -538,7 +625,7 @@
   <!-- СЕРИЯ ШСМ -->
   <div class="section-category" data-category="shsm">
     <div class="section-title" data-accordion="shsm-accordion">
-      <div class="title-left"><span></span> ШСМ (Модульные)</div>
+      <div class="title-left"><span>🧩</span> ШСМ (Модульные)</div>
       <span class="badge" id="shsm-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -550,7 +637,7 @@
   <!-- СЕРИЯ ШСУ -->
   <div class="section-category" data-category="shsu">
     <div class="section-title" data-accordion="shsu-accordion">
-      <div class="title-left"><span></span> ШСУ (Угловые секционные)</div>
+      <div class="title-left"><span>🔄</span> ШСУ (Угловые секционные)</div>
       <span class="badge" id="shsu-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -562,7 +649,7 @@
   <!-- СЕРИЯ ШСШ -->
   <div class="section-category" data-category="shssh">
     <div class="section-title" data-accordion="shssh-accordion">
-      <div class="title-left"><span></span> ШСШ (С шиной)</div>
+      <div class="title-left"><span>⚙️</span> ШСШ (С шиной)</div>
       <span class="badge" id="shssh-count">0</span>
       <span class="arrow">▼</span>
     </div>
@@ -608,10 +695,14 @@
   <div class="menu-item" onclick="window.app.rotationManager.enableRotationMode()"><i>🔄</i> Повернуть объект</div>
   <div class="menu-item" onclick="window.app.rotationManager.resetRotation()"><i>↩️</i> Сбросить вращение</div>
   <div class="divider"></div>
+  <div class="menu-item" onclick="window.app.selectionManager.enableElevatorMode()"><i>⬆️</i> Режим подъема</div>
+  <div class="divider"></div>
   <div class="menu-item" onclick="window.app.selectionManager.cloneObject()"><i>⎘</i> Дублировать</div>
   <div class="divider"></div>
   <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #ff7b72;"><i>🗑️</i> Удалить объект</div>
 </div>
+
+<!-- Кнопка управления камерой -->
 
 <div class="width-control" id="width-control-panel">
   <span>Изменить ширину</span>
@@ -684,7 +775,6 @@ function buildButtons(seriesId, models, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   
-  // Сохраняем оригинальные названия для фильтрации
   models.forEach(model => {
     const btn = document.createElement('button');
     btn.className = 'model-item';
@@ -700,7 +790,6 @@ function buildButtons(seriesId, models, containerId) {
   if (badge) badge.textContent = models.length;
 }
 
-// Функция обновления подсветки при поиске
 function updateHighlighting(query) {
   document.querySelectorAll('.model-item').forEach(item => {
     const originalName = item.getAttribute('data-original-name');
@@ -712,7 +801,6 @@ function updateHighlighting(query) {
   });
 }
 
-// Инициализация всех кнопок
 buildButtons('shn', modelsData.shn, 'shn-grid');
 buildButtons('shng', modelsData.shng, 'shng-grid');
 buildButtons('shnu', modelsData.shnu, 'shnu-grid');
@@ -726,18 +814,15 @@ buildButtons('shsm', modelsData.shsm, 'shsm-grid');
 buildButtons('shsu', modelsData.shsu, 'shsu-grid');
 buildButtons('shssh', modelsData.shssh, 'shssh-grid');
 
-// Общее количество моделей
 const totalModels = Object.values(modelsData).reduce((a, b) => a + b.length, 0);
 document.getElementById('total-models-count').textContent = totalModels + ' моделей';
 
-// Функции аккордеонов
 function initAccordions() {
   const sections = document.querySelectorAll('.section-title[data-accordion]');
   sections.forEach(section => {
     const accordionId = section.getAttribute('data-accordion');
     const content = document.getElementById(accordionId);
     if (content) {
-      // Все аккордеоны закрыты по умолчанию
       content.classList.remove('expanded');
       section.classList.remove('expanded');
       
@@ -750,7 +835,6 @@ function initAccordions() {
   });
 }
 
-// Развернуть всё
 function expandAll() {
   document.querySelectorAll('.accordion-content').forEach(content => {
     content.classList.add('expanded');
@@ -760,7 +844,6 @@ function expandAll() {
   });
 }
 
-// Свернуть всё
 function collapseAll() {
   document.querySelectorAll('.accordion-content').forEach(content => {
     content.classList.remove('expanded');
@@ -770,7 +853,6 @@ function collapseAll() {
   });
 }
 
-// Поиск моделей с фильтрацией секций
 function initSearch() {
   const searchInput = document.getElementById('model-search');
   const searchClear = document.getElementById('search-clear');
@@ -780,10 +862,8 @@ function initSearch() {
     const query = searchInput.value.toLowerCase().trim();
     let totalVisible = 0;
     
-    // Обновляем подсветку текста
     updateHighlighting(query);
     
-    // Фильтруем модели и считаем видимые в каждой категории
     const categories = document.querySelectorAll('.section-category');
     
     categories.forEach(category => {
@@ -801,7 +881,6 @@ function initSearch() {
         }
       });
       
-      // Скрываем всю категорию, если в ней нет видимых моделей
       if (query !== '') {
         if (visibleInCategory === 0 && category.querySelectorAll('.model-item').length > 0) {
           category.classList.add('hidden-category');
@@ -813,12 +892,10 @@ function initSearch() {
       }
     });
     
-    // Показываем/скрываем сообщение "ничего не найдено"
     const hasAnyVisible = totalVisible > 0;
     noResults.style.display = (!hasAnyVisible && query !== '') ? 'block' : 'none';
     searchClear.style.display = query !== '' ? 'flex' : 'none';
     
-    // Если есть поиск, разворачиваем все секции для удобства
     if (query !== '' && totalVisible > 0) {
       expandAll();
     }
@@ -831,13 +908,26 @@ function initSearch() {
   });
 }
 
-// Инициализация
 initAccordions();
 initSearch();
 document.getElementById('expand-all-btn').onclick = expandAll;
 document.getElementById('collapse-all-btn').onclick = collapseAll;
 
-// Обновление счётчика объектов
+let cameraEnabled = true;
+const cameraBtn = document.getElementById('camera-control-btn');
+cameraBtn.onclick = () => {
+  cameraEnabled = !cameraEnabled;
+  if (cameraEnabled) {
+    window.app.cameraController.enable();
+    cameraBtn.classList.remove('disabled');
+    cameraBtn.style.background = 'rgba(74, 110, 224, 0.9)';
+  } else {
+    window.app.cameraController.disable();
+    cameraBtn.classList.add('disabled');
+    cameraBtn.style.background = '#ff4444';
+  }
+};
+
 function updateObjectsCountUI() {
   const count = window.app?.modelManager?.models?.length || 0;
   const span = document.getElementById('objects-count');

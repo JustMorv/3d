@@ -88,6 +88,7 @@ const DragManager = {
             window.app.rotationManager.hideRotationCircle();
           }
           this.selectionManager.disableWidthMode();
+          this.selectionManager.disableElevatorMode();
         }
         
         this.selectionManager.selectObject(clickedObject);
@@ -134,45 +135,36 @@ const DragManager = {
       let newPosition = this.dragIntersection.clone().add(this.dragOffset);
       newPosition.y = this.originalYPosition;
       
-      // ========== ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА СТЕН ==========
+      // АВТОМАТИЧЕСКАЯ СТЫКОВКА (к другим моделям И К СТЕНАМ)
+      if (this.selectionManager.checkAndSnapToNearby) {
+        newPosition = this.selectionManager.checkAndSnapToNearby(newPosition);
+      }
+      
+      // ========== ПРОВЕРКА СТЕН (ТОЛЬКО ДЛЯ ЗАПРЕТА ВЫХОДА, БЕЗ ДОПОЛНИТЕЛЬНОГО ЗАЗОРА) ==========
       const halfSize = this.selectionManager.selectedObject.userData.combinedHalfSize || 
                        this.selectionManager.selectedObject.userData.halfSize;
       
       if (halfSize) {
         const roomW = this.sceneManager.roomW;
         const roomD = this.sceneManager.roomD;
-        const FIXED_WALL_GAP = 5;
+        // МИНИМАЛЬНЫЙ зазор только для предотвращения выхода за стены (0.1 вместо 5)
+        const MIN_WALL_GAP = 0.1;
         
-        // Вычисляем границы
-        const minX = -roomW/2 + halfSize.x + FIXED_WALL_GAP;
-        const maxX = roomW/2 - halfSize.x - FIXED_WALL_GAP;
-        const minZ = -roomD/2 + halfSize.z + FIXED_WALL_GAP;
-        const maxZ = roomD/2 - halfSize.z - FIXED_WALL_GAP;
+        const minX = -roomW/2 + halfSize.x + MIN_WALL_GAP;
+        const maxX = roomW/2 - halfSize.x - MIN_WALL_GAP;
+        const minZ = -roomD/2 + halfSize.z + MIN_WALL_GAP;
+        const maxZ = roomD/2 - halfSize.z - MIN_WALL_GAP;
         
-        // Принудительное ограничение (САМОЕ ВАЖНОЕ!)
         let hasCollision = false;
         
-        if (newPosition.x < minX) {
-          newPosition.x = minX;
-          hasCollision = true;
-        }
-        if (newPosition.x > maxX) {
-          newPosition.x = maxX;
-          hasCollision = true;
-        }
-        if (newPosition.z < minZ) {
-          newPosition.z = minZ;
-          hasCollision = true;
-        }
-        if (newPosition.z > maxZ) {
-          newPosition.z = maxZ;
-          hasCollision = true;
-        }
+        if (newPosition.x < minX) { newPosition.x = minX; hasCollision = true; }
+        if (newPosition.x > maxX) { newPosition.x = maxX; hasCollision = true; }
+        if (newPosition.z < minZ) { newPosition.z = minZ; hasCollision = true; }
+        if (newPosition.z > maxZ) { newPosition.z = maxZ; hasCollision = true; }
         
-        // Обновляем подсветку
         if (hasCollision) {
           if (!this.hasCollision) {
-            this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xff0000);
+            this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true, 0xffaa00);
             this.hasCollision = true;
           }
         } else {
@@ -182,31 +174,21 @@ const DragManager = {
           }
         }
         
-        // Применяем позицию
         this.selectionManager.selectedObject.position.x = newPosition.x;
         this.selectionManager.selectedObject.position.z = newPosition.z;
-        
-        // Отладка
-        if (hasCollision) {
-          console.log('WALL COLLISION!', {
-            pos: { x: newPosition.x.toFixed(1), z: newPosition.z.toFixed(1) },
-            bounds: { minX: minX.toFixed(1), maxX: maxX.toFixed(1), minZ: minZ.toFixed(1), maxZ: maxZ.toFixed(1) },
-            halfSize: { x: halfSize.x.toFixed(1), z: halfSize.z.toFixed(1) }
-          });
-        }
       } else {
-        // Если нет halfSize - просто перемещаем
         this.selectionManager.selectedObject.position.x = newPosition.x;
         this.selectionManager.selectedObject.position.z = newPosition.z;
       }
       
-      // Обновляем коллайдеры
       if (this.collisionManager) {
         this.collisionManager.updateAllColliders(this.selectionManager.selectedObject);
       }
       
-      // Обновляем визуальные элементы
       this.selectionManager.updateGearIconPosition();
+      if (this.selectionManager.isElevatorMode) {
+        this.selectionManager.updateElevatorArrowPosition();
+      }
       
       if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
         window.app.rotationManager.updateRotationCirclePosition();
@@ -220,6 +202,7 @@ const DragManager = {
 
   onMouseUp: function(event) {
     if (this.isDragging && this.selectionManager.selectedObject) {
+      // ПРОВЕРКА КОЛЛИЗИЙ С ДРУГИМИ ОБЪЕКТАМИ
       const isInCollision = this.collisionManager.isObjectInCollision(this.selectionManager.selectedObject);
       
       if (isInCollision) {
@@ -231,16 +214,19 @@ const DragManager = {
         }
         
         DebugHelper.log('Объект возвращен в безопасную позицию из-за коллизии');
+      }
+      
+      // Сохраняем текущую высоту
+      const currentY = this.selectionManager.selectedObject.position.y;
+      const box = new THREE.Box3().setFromObject(this.selectionManager.selectedObject);
+      const minY = box.min.y;
+      const floorLevel = this.sceneManager.floorLevel;
+      
+      if (Math.abs(minY - floorLevel) > 5) {
+        this.selectionManager.manuallyElevated = true;
+        this.selectionManager.selectedObject.userData.customHeight = currentY;
       } else {
-        const box = new THREE.Box3().setFromObject(this.selectionManager.selectedObject);
-        const minY = box.min.y;
-        const floorLevel = this.sceneManager.floorLevel;
-        
-        if (Math.abs(minY - floorLevel) > 1) {
-          const correction = floorLevel - minY;
-          this.selectionManager.selectedObject.position.y += correction;
-          DebugHelper.log('Объект выровнен по полу, коррекция:', correction);
-        }
+        this.selectionManager.manuallyElevated = false;
       }
       
       this.selectionManager.setObjectHighlight(this.selectionManager.selectedObject, true);
