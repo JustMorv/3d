@@ -9,7 +9,36 @@ const ModelLoader = {
   MODEL_TARGET_HEIGHT_SCALE: 0.8,
   MODEL_MAX_HEIGHT: 250,
 
-modelMap: {
+  // НАСТРОЙКИ ЗАТЕМНЕНИЯ
+  DARKEN_CONFIG: {
+    enabled: false,          // отключаем затемнение, так как используем текстуру
+    color: 0x202020,
+    intensity: 0,
+    reduceEmissive: true,
+    addRoughness: true,
+    reduceMetalness: true
+  },
+  
+  // НАСТРОЙКИ КОНТУРОВ
+  OUTLINE_CONFIG: {
+    enabled: true,
+    color: 0x202020,
+    thresholdAngle: 45,
+    lineWidth: 1
+  },
+  
+  // НАСТРОЙКИ ТЕКСТУР
+  TEXTURE_CONFIG: {
+    enabled: true,           // включить текстуры
+    repeatX: 3,              // повторение по X (чем больше, тем мельче текстура)
+    repeatY: 3,              // повторение по Y (чем больше, тем мельче текстура)
+    fallbackColor: 0xcccccc, // цвет если текстура не загрузилась
+    roughness: 0.6,          // шероховатость (0 - гладкий, 1 - матовый)
+    metalness: 0.05,         // металличность (0 - не металл, 1 - металл)
+    anisotropy: 16           // улучшение качества при взгляде под углом
+  },
+
+  modelMap: {
     // ШН
     'ШН36-50': 'ШН36-50.glb',
     'ШН36-60': 'ШН36-60.glb',
@@ -115,6 +144,10 @@ modelMap: {
     'ШСШ60-3.2': 'ШСШ60-3.2.glb',
     'ШСШ60-4': 'ШСШ60-4.glb',
   },
+  
+  // Кэш для текстур
+  textureCache: {},
+  
   init: function(sceneManager) {
     this.sceneManager = sceneManager;
     this.loaders.gltf = new THREE.GLTFLoader();
@@ -138,139 +171,346 @@ modelMap: {
       (error) => this.onError(error, modelType)
     );
   },
-
-onModelLoaded: function(gltf, modelType) {
-  const model = gltf.scene;
-  const modelGroup = new THREE.Group();
-  modelGroup.name = modelType + '_group';
   
-  // ПРИНУДИТЕЛЬНОЕ ЦЕНТРИРОВАНИЕ МОДЕЛИ
-  // Сначала вычисляем bounding box оригинальной модели
-  const tempBox = new THREE.Box3().setFromObject(model);
-  const center = tempBox.getCenter(new THREE.Vector3());
-  const size = tempBox.getSize(new THREE.Vector3());
-  const minY = tempBox.min.y;
-  
-  console.log('=== ДО центрирования ===');
-  console.log('Центр модели:', center);
-  console.log('Размер:', size);
-  console.log('minY:', minY);
-  
-  // Смещаем все дочерние объекты так, чтобы центр стал в 0,0,0
-  model.position.sub(center);
-  
-  // Проверяем после центрирования
-  const centeredBox = new THREE.Box3().setFromObject(model);
-  const centeredMinY = centeredBox.min.y;
-  const centeredSize = centeredBox.getSize(new THREE.Vector3());
-  
-  console.log('=== ПОСЛЕ центрирования ===');
-  console.log('Новый minY:', centeredMinY);
-  console.log('Новый размер:', centeredSize);
-  
-  // Добавляем модель в группу
-  modelGroup.add(model);
-  
-  // Теперь центрирование выполнено, модель стоит так, что её центр в 0,0,0
-  // Нужно поднять её так, чтобы нижняя точка была на 0
-  const finalBoxBeforeScale = new THREE.Box3().setFromObject(modelGroup);
-  const finalMinYBeforeScale = finalBoxBeforeScale.min.y;
-  
-  console.log('minY перед масштабированием:', finalMinYBeforeScale);
-  
-  // Вычисляем масштаб
-  const scale = this.calculateModelScaleWithRoomCheck(centeredSize, modelType);
-  modelGroup.scale.setScalar(scale);
-  
-  // После масштабирования - ставим на пол
-  const afterScaleBox = new THREE.Box3().setFromObject(modelGroup);
-  const afterScaleMinY = afterScaleBox.min.y;
-
-  // Поднимаем на пол
-  modelGroup.position.y = -afterScaleMinY;
-  
-  // Финальный размер
-  const finalBox = new THREE.Box3().setFromObject(modelGroup);
-  const finalSize = finalBox.getSize(new THREE.Vector3());
-  const finalMinY = finalBox.min.y;
-  
-  console.log('=== ФИНАЛ ===');
-  console.log('Размер:', finalSize);
-  console.log('minY (должен быть 0):', finalMinY);
-  console.log('Позиция Y:', modelGroup.position.y);
-  
-  // Расчет позиции в комнате (X, Z)
-  const roomW = this.sceneManager.roomW;
-  const roomD = this.sceneManager.roomD;
-  const FIXED_WALL_GAP = 5;
-  
-  const halfSize = {
-    x: finalSize.x / 2,
-    z: finalSize.z / 2
-  };
-  
-  const minX = -roomW/2 + halfSize.x + FIXED_WALL_GAP;
-  const maxX = roomW/2 - halfSize.x - FIXED_WALL_GAP;
-  const minZ = -roomD/2 + halfSize.z + FIXED_WALL_GAP;
-  const maxZ = roomD/2 - halfSize.z - FIXED_WALL_GAP;
-  
-  const randomX = minX + Math.random() * (maxX - minX);
-  const randomZ = minZ + Math.random() * (maxZ - minZ);
-  
-  modelGroup.position.x = randomX;
-  modelGroup.position.z = randomZ;
-  
-  console.log('Позиция в комнате:', { x: randomX, z: randomZ });
-  console.log('Финальная позиция:', modelGroup.position);
-  
-  // Настройка материалов
-  modelGroup.traverse((child) => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      if (!child.userData.originalMaterial) {
-        child.userData.originalMaterial = child.material;
+  // Загрузка текстуры для модели с настройками повторения
+  loadTextureForModel: function(modelType, callback) {
+    const texturePath = '../models/3dModels/3d/' + modelType + '_textures/default.bmp';
+    
+    if (this.textureCache[texturePath]) {
+      callback(this.textureCache[texturePath]);
+      return;
+    }
+    
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+      texturePath,
+      (texture) => {
+        // НАСТРОЙКИ ТЕКСТУРЫ ДЛЯ УМЕНЬШЕНИЯ И ПОВТОРЕНИЯ
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        
+        // Устанавливаем повторение (чем больше число, тем мельче текстура)
+        texture.repeat.set(this.TEXTURE_CONFIG.repeatX, this.TEXTURE_CONFIG.repeatY);
+        
+        // Улучшаем качество текстуры
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = this.TEXTURE_CONFIG.anisotropy;
+        
+        this.textureCache[texturePath] = texture;
+        console.log('Текстура загружена для модели:', modelType, 
+                    'повторение:', this.TEXTURE_CONFIG.repeatX, 'x', this.TEXTURE_CONFIG.repeatY);
+        callback(texture);
+      },
+      undefined,
+      (error) => {
+        console.warn('Не удалось загрузить текстуру для модели', modelType, error);
+        callback(null);
       }
+    );
+  },
+  
+  // Применение текстуры ко всем материалам модели
+  applyTextureToModel: function(modelGroup, texture) {
+    if (!texture) return false;
+    
+    let appliedCount = 0;
+    
+    modelGroup.traverse((child) => {
+      if (child.isMesh && child.material) {
+        try {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat, idx) => {
+              const newMaterial = this.createTexturedMaterial(mat, texture);
+              if (newMaterial) {
+                child.material[idx] = newMaterial;
+                appliedCount++;
+              }
+            });
+          } else {
+            const newMaterial = this.createTexturedMaterial(child.material, texture);
+            if (newMaterial) {
+              child.material = newMaterial;
+              appliedCount++;
+            }
+          }
+        } catch(e) {
+          console.warn('Ошибка применения текстуры:', e);
+        }
+      }
+    });
+    
+    // Масштабируем UV координаты для лучшего повторения
+    this.scaleUVs(modelGroup);
+    
+    console.log(`Текстура применена к ${appliedCount} материалам модели`);
+    return appliedCount > 0;
+  },
+  
+  // Масштабирование UV координат для повторения текстуры
+  scaleUVs: function(modelGroup) {
+    const repeatX = this.TEXTURE_CONFIG.repeatX;
+    const repeatY = this.TEXTURE_CONFIG.repeatY;
+    
+    modelGroup.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        if (child.geometry.attributes.uv) {
+          const uvs = child.geometry.attributes.uv.array;
+          
+          // Масштабируем UV координаты
+          for (let i = 0; i < uvs.length; i += 2) {
+            uvs[i] *= repeatX;
+            uvs[i + 1] *= repeatY;
+          }
+          
+          child.geometry.attributes.uv.needsUpdate = true;
+          console.log('UV координаты масштабированы для:', child.name || 'безымянной части');
+        }
+      }
+    });
+  },
+  
+  // Создание материала с текстурой
+  createTexturedMaterial: function(originalMaterial, texture) {
+    try {
+      const texturedMaterial = new THREE.MeshStandardMaterial({
+        map: texture,
+        color: 0xffffff,
+        roughness: this.TEXTURE_CONFIG.roughness,
+        metalness: this.TEXTURE_CONFIG.metalness,
+        emissive: 0x000000,
+        emissiveIntensity: 0,
+        flatShading: false,
+        side: THREE.DoubleSide
+      });
+      
+      return texturedMaterial;
+    } catch(e) {
+      console.warn('Ошибка создания текстурированного материала:', e);
+      return null;
     }
-  });
+  },
 
-  // Сохраняем данные
-  modelGroup.userData = {
-    type: 'model',
-    name: modelType,
-    halfSize: halfSize,
-    originalScale: modelGroup.scale.x,
-    boundingBox: finalBox.clone(),
-    originalWidth: finalSize.x,
-    originalDepth: finalSize.z,
-    originalHeight: finalSize.y,
-    shape: 'complex',
-    modelHeight: finalSize.y,
-    baseY: 0,
-    scaleInfo: {
-      originalWidth: centeredSize.x,
-      targetWidth: this.getTargetWidth(modelType),
-      originalHeight: centeredSize.y,
-      appliedScale: modelGroup.scale.x
+  onModelLoaded: function(gltf, modelType) {
+    const model = gltf.scene;
+    const modelGroup = new THREE.Group();
+    modelGroup.name = modelType + '_group';
+    
+    // Центрирование модели
+    const tempBox = new THREE.Box3().setFromObject(model);
+    const center = tempBox.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    modelGroup.add(model);
+    
+    // Вычисляем масштаб
+    const centeredSize = new THREE.Box3().setFromObject(modelGroup).getSize(new THREE.Vector3());
+    const scale = this.calculateModelScaleWithRoomCheck(centeredSize, modelType);
+    modelGroup.scale.setScalar(scale);
+    
+    // Ставим на пол
+    const afterScaleBox = new THREE.Box3().setFromObject(modelGroup);
+    const afterScaleMinY = afterScaleBox.min.y;
+    modelGroup.position.y = -afterScaleMinY;
+    
+    // Финальный размер
+    const finalBox = new THREE.Box3().setFromObject(modelGroup);
+    const finalSize = finalBox.getSize(new THREE.Vector3());
+    
+    // Позиция в комнате
+    const roomW = this.sceneManager.roomW;
+    const roomD = this.sceneManager.roomD;
+    const FIXED_WALL_GAP = 5;
+    
+    const halfSize = {
+      x: finalSize.x / 2,
+      z: finalSize.z / 2
+    };
+    
+    const minX = -roomW/2 + halfSize.x + FIXED_WALL_GAP;
+    const maxX = roomW/2 - halfSize.x - FIXED_WALL_GAP;
+    const minZ = -roomD/2 + halfSize.z + FIXED_WALL_GAP;
+    const maxZ = roomD/2 - halfSize.z - FIXED_WALL_GAP;
+    
+    const randomX = minX + Math.random() * (maxX - minX);
+    const randomZ = minZ + Math.random() * (maxZ - minZ);
+    
+    modelGroup.position.x = randomX;
+    modelGroup.position.z = randomZ;
+    
+    // ========== ЗАГРУЗКА И ПРИМЕНЕНИЕ ТЕКСТУРЫ ==========
+    if (this.TEXTURE_CONFIG.enabled) {
+      this.loadTextureForModel(modelType, (texture) => {
+        if (texture) {
+          this.applyTextureToModel(modelGroup, texture);
+        } else {
+          // Если текстура не загрузилась, применяем затемнение
+          console.log('Текстура не найдена, применяем затемнение для:', modelType);
+          this.darkenModelMaterials(modelGroup);
+        }
+        
+        // Добавляем контуры
+        this.addOutlinesToModel(modelGroup);
+        
+        // Настройка теней
+        modelGroup.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+      });
+    } else {
+      // Если текстуры отключены, затемняем
+      this.darkenModelMaterials(modelGroup);
+      this.addOutlinesToModel(modelGroup);
+      
+      modelGroup.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
     }
-  };
 
-  // Добавляем в сцену
-  this.sceneManager.addObject(modelGroup);
-  
-  if (window.app && window.app.collisionManager) {
-    window.app.collisionManager.updateObjectHalfSize(modelGroup);
-  }
-  
+    // Сохраняем данные
+    modelGroup.userData = {
+      type: 'model',
+      name: modelType,
+      halfSize: halfSize,
+      originalScale: modelGroup.scale.x,
+      boundingBox: finalBox.clone(),
+      originalWidth: finalSize.x,
+      originalDepth: finalSize.z,
+      originalHeight: finalSize.y,
+      shape: 'complex',
+      modelHeight: finalSize.y,
+      baseY: 0,
+      scaleInfo: {
+        originalWidth: centeredSize.x,
+        targetWidth: this.getTargetWidth(modelType),
+        originalHeight: centeredSize.y,
+        appliedScale: modelGroup.scale.x
+      }
+    };
 
+    // Добавляем в сцену
+    this.sceneManager.addObject(modelGroup);
+    
+    if (window.app && window.app.collisionManager) {
+      window.app.collisionManager.updateObjectHalfSize(modelGroup);
+    }
+    
+    console.log('Модель загружена:', modelType);
+    EventManager.emit('model-loaded', { model: modelGroup, type: modelType });
+  },
   
-  console.log('Модель загружена:', modelType);
-  EventManager.emit('model-loaded', { model: modelGroup, type: modelType });
-},
+  // ========== МЕТОДЫ ЗАТЕМНЕНИЯ ==========
+  
+  darkenModelMaterials: function(modelGroup) {
+    const config = this.DARKEN_CONFIG;
+    if (!config.enabled) return;
+    
+    modelGroup.traverse((child) => {
+      if (child.isMesh && child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((mat, idx) => {
+            child.material[idx] = this.createDarkenedMaterial(mat, config.color, config.intensity);
+          });
+        } else {
+          child.material = this.createDarkenedMaterial(child.material, config.color, config.intensity);
+        }
+      }
+    });
+  },
+  
+  createDarkenedMaterial: function(originalMaterial, darkColor, intensity) {
+    const clonedMat = originalMaterial.clone();
+    
+    if (clonedMat.color) {
+      const origColor = clonedMat.color;
+      const grayColor = new THREE.Color(darkColor);
+      
+      const r = origColor.r * (1 - intensity) + grayColor.r * intensity;
+      const g = origColor.g * (1 - intensity) + grayColor.g * intensity;
+      const b = origColor.b * (1 - intensity) + grayColor.b * intensity;
+      
+      clonedMat.color.setRGB(r, g, b);
+    } else {
+      clonedMat.color = new THREE.Color(darkColor);
+    }
+    
+    if (this.DARKEN_CONFIG.reduceEmissive && clonedMat.emissive) {
+      clonedMat.emissiveIntensity = Math.max(0.05, (clonedMat.emissiveIntensity || 0.3) * 0.2);
+      clonedMat.emissive.setRGB(0.1, 0.1, 0.1);
+    }
+    
+    if (this.DARKEN_CONFIG.addRoughness && clonedMat.roughness !== undefined) {
+      clonedMat.roughness = Math.min(0.9, (clonedMat.roughness || 0.5) + 0.3);
+    }
+    
+    if (this.DARKEN_CONFIG.reduceMetalness && clonedMat.metalness !== undefined) {
+      clonedMat.metalness = Math.max(0, (clonedMat.metalness || 0.5) - 0.3);
+    }
+    
+    return clonedMat;
+  },
+  
+  // ========== МЕТОДЫ ДОБАВЛЕНИЯ КОНТУРОВ ==========
+  
+  addOutlinesToModel: function(modelGroup) {
+    const config = this.OUTLINE_CONFIG;
+    if (!config.enabled) return;
+    
+    modelGroup.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        try {
+          const edgesGeo = new THREE.EdgesGeometry(child.geometry, config.thresholdAngle);
+          const outlineMat = new THREE.LineBasicMaterial({ color: config.color });
+          const wireframe = new THREE.LineSegments(edgesGeo, outlineMat);
+          
+          wireframe.position.copy(child.position);
+          wireframe.rotation.copy(child.rotation);
+          wireframe.scale.copy(child.scale);
+          
+          child.add(wireframe);
+          
+          if (!modelGroup.userData.outlines) {
+            modelGroup.userData.outlines = [];
+          }
+          modelGroup.userData.outlines.push(wireframe);
+        } catch(e) {
+          console.warn('Не удалось добавить контуры:', e);
+        }
+      }
+    });
+    
+    if (modelGroup.userData.outlines && modelGroup.userData.outlines.length > 0) {
+      console.log(`Добавлено ${modelGroup.userData.outlines.length} контуров`);
+    }
+  },
+  
+  removeOutlinesFromModel: function(modelGroup) {
+    if (modelGroup.userData.outlines) {
+      modelGroup.userData.outlines.forEach(outline => {
+        if (outline.parent) outline.parent.remove(outline);
+        if (outline.geometry) outline.geometry.dispose();
+        if (outline.material) outline.material.dispose();
+      });
+      modelGroup.userData.outlines = [];
+    }
+  },
+  
+  setOutlineColor: function(modelGroup, color) {
+    if (modelGroup.userData.outlines) {
+      modelGroup.userData.outlines.forEach(outline => {
+        if (outline.material) outline.material.color.setHex(color);
+      });
+    }
+  },
+
   calculateModelScaleWithRoomCheck: function(originalSize, modelType) {
     const targetWidth = this.getTargetWidth(modelType);
     const widthScale = targetWidth / originalSize.x;
-    
     const scaledHeight = originalSize.y * widthScale;
     
     let heightScale = 1;
@@ -295,24 +535,24 @@ onModelLoaded: function(gltf, modelType) {
 
   getTargetWidth: function(modelType) {
     const specialSizes = {
-    'kitchen_cabinets': 100,
-    'new_kitchen': 100,
-    'modern_kitchen': 100,
-    'kitchen': 100,
-    'kitchen1': 100,
-    'kitchen2': 100,
-    'kitchen_cabinets2': 100,
-    'kitchen_set': 100,
-    'living_room': 100, 
-    'hallway': 100,
-    'basic_kitchen': 100,
-    'cabinet': 100,
-    'kitchen_model_2': 100,
-    'pigan': 100,
-    'pobin': 100
-  };
-  
-  return specialSizes[modelType] || 150;
+      'kitchen_cabinets': 100,
+      'new_kitchen': 100,
+      'modern_kitchen': 100,
+      'kitchen': 100,
+      'kitchen1': 100,
+      'kitchen2': 100,
+      'kitchen_cabinets2': 100,
+      'kitchen_set': 100,
+      'living_room': 100, 
+      'hallway': 100,
+      'basic_kitchen': 100,
+      'cabinet': 100,
+      'kitchen_model_2': 100,
+      'pigan': 100,
+      'pobin': 100
+    };
+    
+    return specialSizes[modelType] || 150;
   },
 
   getHeightScale: function(modelType) {
@@ -423,44 +663,41 @@ onModelLoaded: function(gltf, modelType) {
       scale: scale
     };
   },
-calculateModelPosition: function(size, modelType) {
-  const roomW = this.sceneManager.roomW;
-  const roomD = this.sceneManager.roomD;
   
-  const roomHalfWidth = roomW / 2;
-  const roomHalfDepth = roomD / 2;
-  
-  const modelHalfWidth = size.x / 2;
-  const modelHalfDepth = size.z / 2;
-  
-  // ФИКСИРОВАННЫЙ ЗАЗОР ОТ СТЕНЫ (5 единиц)
-  const FIXED_WALL_GAP = 5;
-  
-  // Границы с учетом размера модели и фиксированного зазора
-  const minX = -roomHalfWidth + modelHalfWidth + FIXED_WALL_GAP;
-  const maxX = roomHalfWidth - modelHalfWidth - FIXED_WALL_GAP;
-  const minZ = -roomHalfDepth + modelHalfDepth + FIXED_WALL_GAP;
-  const maxZ = roomHalfDepth - modelHalfDepth - FIXED_WALL_GAP;
-  
-  DebugHelper.log('Размещение модели ' + modelType + ':', {
-    modelSize: size,
-    modelHalf: { x: modelHalfWidth, z: modelHalfDepth },
-    bounds: { minX, maxX, minZ, maxZ },
-    fixedGap: FIXED_WALL_GAP
-  });
-  
-  // Если модель слишком большая
-  if (minX > maxX || minZ > maxZ) {
-    DebugHelper.warn('Модель ' + modelType + ' слишком большая, помещаем в центр');
-    return { x: 0, z: 0 };
-  }
-  
-  // Случайная позиция в доступной области
-  const safeX = minX + Math.random() * (maxX - minX);
-  const safeZ = minZ + Math.random() * (maxZ - minZ);
-  
-  return { x: safeX, z: safeZ };
-},
+  calculateModelPosition: function(size, modelType) {
+    const roomW = this.sceneManager.roomW;
+    const roomD = this.sceneManager.roomD;
+    
+    const roomHalfWidth = roomW / 2;
+    const roomHalfDepth = roomD / 2;
+    
+    const modelHalfWidth = size.x / 2;
+    const modelHalfDepth = size.z / 2;
+    
+    const FIXED_WALL_GAP = 5;
+    
+    const minX = -roomHalfWidth + modelHalfWidth + FIXED_WALL_GAP;
+    const maxX = roomHalfWidth - modelHalfWidth - FIXED_WALL_GAP;
+    const minZ = -roomHalfDepth + modelHalfDepth + FIXED_WALL_GAP;
+    const maxZ = roomHalfDepth - modelHalfDepth - FIXED_WALL_GAP;
+    
+    DebugHelper.log('Размещение модели ' + modelType + ':', {
+      modelSize: size,
+      modelHalf: { x: modelHalfWidth, z: modelHalfDepth },
+      bounds: { minX, maxX, minZ, maxZ },
+      fixedGap: FIXED_WALL_GAP
+    });
+    
+    if (minX > maxX || minZ > maxZ) {
+      DebugHelper.warn('Модель ' + modelType + ' слишком большая, помещаем в центр');
+      return { x: 0, z: 0 };
+    }
+    
+    const safeX = minX + Math.random() * (maxX - minX);
+    const safeZ = minZ + Math.random() * (maxZ - minZ);
+    
+    return { x: safeX, z: safeZ };
+  },
 
   onProgress: function(xhr) {
     console.log((xhr.loaded / xhr.total * 100).toFixed(1) + '% загружено');
