@@ -697,8 +697,6 @@
   <div class="divider"></div>
   <div class="menu-item" onclick="window.app.selectionManager.enableElevatorMode()"><i>⬆️</i> Режим подъема</div>
   <div class="divider"></div>
-  <div class="menu-item" onclick="window.app.selectionManager.cloneObject()"><i>⎘</i> Дублировать</div>
-  <div class="divider"></div>
   <div class="menu-item" onclick="window.app.selectionManager.deleteSelected()" style="color: #ff7b72;"><i>🗑️</i> Удалить объект</div>
 </div>
 
@@ -739,7 +737,136 @@
 <script src="modules/Interactions/RotationManager.js"></script>
 <script src="modules/Interactions/ContextMenu.js"></script>
 <script src="main.js"></script>
-
+<script>
+// Самый надёжный способ - отслеживаем все клики на самом низком уровне
+(function() {
+    
+    // Функция принудительного скрытия
+    function hideAllUI() {
+        // НЕ скрываем если открыто контекстное меню или его пункты
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu && contextMenu.style.display === 'block') {
+            console.log('Контекстное меню открыто - не скрываем UI');
+            return;
+        }
+        
+        // Проверяем, не наведена ли мышь на контекстное меню
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.closest && activeElement.closest('#context-menu')) {
+            console.log('Активный элемент внутри контекстного меню - не скрываем');
+            return;
+        }
+        
+        console.log('Скрываем UI');
+        const gear = document.querySelector('.gear-icon');
+        if (gear) gear.style.display = 'none';
+        
+        const rotCircle = document.querySelector('.rotation-circle');
+        if (rotCircle) rotCircle.style.display = 'none';
+        
+        const rotHandle = document.querySelector('.rotation-handle');
+        if (rotHandle) rotHandle.style.display = 'none';
+        
+        const elevator = document.querySelector('.elevator-arrow');
+        if (elevator) elevator.style.display = 'none';
+        
+        const widthControl = document.querySelector('.width-control');
+        if (widthControl) widthControl.style.display = 'none';
+    }
+    
+    // Функция для проверки, кликнули ли по элементу управления моделью
+    function isModelControlElement(target) {
+        // Список классов и ID элементов, которые НЕ должны скрывать шестерёнку
+        const controlSelectors = [
+            '.menu-item',           // пункты контекстного меню
+            '#context-menu',        // само контекстное меню
+            '.rotation-handle',     // ручка вращения
+            '.elevator-arrow',      // стрелка подъема
+            '.width-control',       // панель изменения ширины
+            '.width-control *',     // все элементы внутри панели ширины
+            '.gear-icon',           // сама шестерёнка
+            '.rotation-circle',     // круг вращения
+            '#camera-control-btn',  // кнопка камеры
+            '#main-menu',           // главное меню
+            '#main-menu *'          // все элементы главного меню
+        ];
+        
+        // Проверяем, соответствует ли элемент или его родитель одному из селекторов
+        for (let selector of controlSelectors) {
+            try {
+                if (target.closest && target.closest(selector)) {
+                    return true;
+                }
+            } catch(e) {}
+        }
+        
+        return false;
+    }
+    
+    // Перехватываем все mousedown на документе
+    document.addEventListener('mousedown', function(e) {
+        // Проверяем, клик по элементам управления моделью
+        const isControlElement = isModelControlElement(e.target);
+        
+        // Если кликнули по элементу управления - НЕ скрываем шестерёнку
+        if (isControlElement) {
+            return;
+        }
+        
+        // Если кликнули не по элементу управления - скрываем всё
+        setTimeout(hideAllUI, 10);
+    }, true);
+    
+    // Перехватываем клики по canvas
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+        canvas.addEventListener('mousedown', function(e) {
+            // Проверяем, открыто ли контекстное меню
+            const contextMenu = document.getElementById('context-menu');
+            if (contextMenu && contextMenu.style.display === 'block') {
+                console.log('Контекстное меню открыто - игнорируем клик по canvas');
+                return;
+            }
+            
+            setTimeout(() => {
+                const gear = document.querySelector('.gear-icon');
+                if (gear && gear.style.display === 'flex') {
+                    if (window.app && window.app.selectionManager && window.app.selectionManager.selectedObject) {
+                        const rect = canvas.getBoundingClientRect();
+                        const mouse = new THREE.Vector2();
+                        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                        
+                        const raycaster = new THREE.Raycaster();
+                        if (window.app.cameraController && window.app.cameraController.camera) {
+                            raycaster.setFromCamera(mouse, window.app.cameraController.camera);
+                            const intersects = raycaster.intersectObjects(window.app.sceneManager.objects, true);
+                            
+                            let clickedOnAnyModel = false;
+                            if (intersects.length > 0) {
+                                clickedOnAnyModel = true;
+                            }
+                            
+                            if (!clickedOnAnyModel) {
+                                console.log('Клик по пустому месту canvas - скрываем шестерёнку');
+                                hideAllUI();
+                                if (window.app.selectionManager) {
+                                    if (window.app.selectionManager.selectedObject) {
+                                        window.app.selectionManager.setObjectHighlight(window.app.selectionManager.selectedObject, false);
+                                        window.app.selectionManager.selectedObject = null;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }, 50);
+        });
+    }
+    
+    console.log('Супер-обработчик установлен');
+})();
+</script>
 <script>
 // Данные моделей
 const modelsData = {

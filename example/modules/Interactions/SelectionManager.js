@@ -22,6 +22,8 @@ const SelectionManager = {
   isElevating: false,
   startMouseY: 0,
   startObjectY: 0,
+  elevatorStep: 5,  // Шаг подъема в единицах (можно менять)
+  showBoundsVisual: false,  // Показывать ли границы визуально
   
   // Для автоматической стыковки
   snapDistance: 15,
@@ -34,6 +36,10 @@ const SelectionManager = {
   
   // Для уведомлений о стыковке
   lastWallSnapNotified: false,
+  
+  // Для ограничений подъема
+  limitReachedNotified: false,
+  boundsLines: null,
 
   init: function(sceneManager, uiManager, modelManager, collisionManager, dragManager) {
     this.sceneManager = sceneManager;
@@ -45,6 +51,7 @@ const SelectionManager = {
     this.createGearIcon();
     this.createElevatorArrow();
     this.bindEvents();
+    this.boundsLines = [];
   },
   
   bindEvents: function() {
@@ -54,11 +61,42 @@ const SelectionManager = {
       }
       if (this.isElevatorMode && this.selectedObject) {
         this.updateElevatorArrowPosition();
+        if (this.showBoundsVisual) {
+          this.updateBoundsLinesPosition();
+        }
       }
       if (window.app.rotationManager && window.app.rotationManager.isRotationMode) {
         window.app.rotationManager.updateRotationCirclePosition();
       }
     });
+  },
+
+  // Настройка шага подъема
+  setElevatorStep: function(step) {
+    this.elevatorStep = Math.max(1, Math.min(50, step));
+    if (this.uiManager) {
+      this.uiManager.showNotification(`Шаг подъема установлен: ${this.elevatorStep} ед.`, 'info', 1500);
+    }
+    console.log(`Шаг подъема изменен на ${this.elevatorStep}`);
+  },
+
+  // Включение/выключение визуальных границ
+  toggleBoundsVisual: function() {
+    this.showBoundsVisual = !this.showBoundsVisual;
+    if (!this.showBoundsVisual) {
+      this.hideElevationBounds();
+      if (this.uiManager) {
+        this.uiManager.showNotification('Границы скрыты', 'info', 1000);
+      }
+    } else {
+      if (this.isElevatorMode && this.selectedObject) {
+        this.showElevationBounds();
+        if (this.uiManager) {
+          this.uiManager.showNotification('Границы показаны', 'info', 1000);
+        }
+      }
+    }
+    return this.showBoundsVisual;
   },
 
   createGearIcon: function() {
@@ -104,6 +142,14 @@ const SelectionManager = {
     this.startMouseY = e.clientY;
     this.startObjectY = this.selectedObject.position.y;
     
+    // Получаем ограничения для отображения в консоли
+    const box = new THREE.Box3().setFromObject(this.selectedObject);
+    const size = box.getSize(new THREE.Vector3());
+    const minY = this.sceneManager.floorLevel + (size.y / 2);
+    const maxY = this.sceneManager.roomH - (size.y / 2);
+    
+    console.log(`Ограничения подъема: minY=${minY.toFixed(1)}, maxY=${maxY.toFixed(1)}, шаг=${this.elevatorStep}`);
+    
     document.addEventListener('mousemove', this.onElevatorMove.bind(this));
     document.addEventListener('mouseup', this.stopElevating.bind(this));
     
@@ -116,21 +162,55 @@ const SelectionManager = {
     const deltaY = (this.startMouseY - e.clientY) * 0.5;
     let newY = this.startObjectY + deltaY;
     
-    // Ограничения (минимальная высота - пол, максимальная - 500)
+    // Получаем размеры модели
     const box = new THREE.Box3().setFromObject(this.selectedObject);
-    const minPossibleY = this.sceneManager.floorLevel;
-    const maxAllowedY = 500;
+    const size = box.getSize(new THREE.Vector3());
+    const modelHeight = size.y;
     
-    newY = Math.max(minPossibleY, Math.min(maxAllowedY, newY));
+    // Ограничения
+    const floorLevel = this.sceneManager.floorLevel;      // уровень пола (0)
+    const ceilingLevel = this.sceneManager.roomH;        // высота потолка (270)
+    
+    // Минимальная позиция Y (модель стоит на полу)
+    const minY = floorLevel + (modelHeight / 2);
+    
+    // Максимальная позиция Y (модель не выше потолка)
+    const maxY = ceilingLevel - (modelHeight / 2);
+    
+    // Округляем до шага для более плавного подъема
+    newY = Math.round(newY / this.elevatorStep) * this.elevatorStep;
+    
+    // Ограничиваем новую позицию
+    newY = Math.max(minY, Math.min(maxY, newY));
+    
+    // Показываем уведомление при достижении границ
+    if (newY <= minY + 1) {
+      if (this.uiManager && !this.limitReachedNotified) {
+        this.uiManager.showNotification('⚠️ Модель на полу. Нельзя опустить ниже', 'warning', 1000);
+        this.limitReachedNotified = true;
+        setTimeout(() => { this.limitReachedNotified = false; }, 1000);
+      }
+    } else if (newY >= maxY - 1) {
+      if (this.uiManager && !this.limitReachedNotified) {
+        this.uiManager.showNotification(`⚠️ Модель достигла потолка (${maxY.toFixed(0)} ед.)`, 'warning', 1000);
+        this.limitReachedNotified = true;
+        setTimeout(() => { this.limitReachedNotified = false; }, 1000);
+      }
+    } else {
+      this.limitReachedNotified = false;
+    }
     
     this.selectedObject.position.y = newY;
     
     // Отмечаем, что объект был поднят вручную
-    if (newY > minPossibleY + 1) {
+    if (newY > minY + 1) {
       this.manuallyElevated = true;
     } else {
       this.manuallyElevated = false;
     }
+    
+    // Сохраняем текущую высоту
+    this.selectedObject.userData.customHeight = newY;
     
     if (this.collisionManager) {
       this.collisionManager.updateAllColliders(this.selectedObject);
@@ -138,6 +218,11 @@ const SelectionManager = {
     
     this.updateGearIconPosition();
     this.updateElevatorArrowPosition();
+    
+    // Обновляем границы только если они включены
+    if (this.showBoundsVisual) {
+      this.updateBoundsLinesPosition();
+    }
     
     if (this.isSizeLinesVisible) {
       this.updateSizeLinesPosition();
@@ -159,6 +244,141 @@ const SelectionManager = {
     }
   },
   
+  // Показать границы подъема для текущей модели
+  showElevationBounds: function() {
+    if (!this.selectedObject || !this.showBoundsVisual) return;
+    
+    // Удаляем старые границы
+    this.hideElevationBounds();
+    
+    const box = new THREE.Box3().setFromObject(this.selectedObject);
+    const size = box.getSize(new THREE.Vector3());
+    const modelHeight = size.y;
+    const centerX = this.selectedObject.position.x;
+    const centerZ = this.selectedObject.position.z;
+    
+    const floorLevel = this.sceneManager.floorLevel;
+    const ceilingLevel = this.sceneManager.roomH;
+    
+    const minY = floorLevel;
+    const maxY = ceilingLevel - modelHeight;
+    
+    // Создаём линии границ
+    const pointsBottom = [
+      new THREE.Vector3(centerX - 40, minY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, minY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, minY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, minY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, minY, centerZ - 40)
+    ];
+    
+    const pointsTop = [
+      new THREE.Vector3(centerX - 40, maxY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, maxY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, maxY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, maxY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, maxY, centerZ - 40)
+    ];
+    
+    // Рисуем нижнюю границу (пол) - зелёным
+    for (let i = 0; i < pointsBottom.length - 1; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsBottom[i], pointsBottom[i+1]]);
+      const material = new THREE.LineBasicMaterial({ color: 0x44ff44, linewidth: 2 });
+      const line = new THREE.Line(geometry, material);
+      this.sceneManager.scene.add(line);
+      this.boundsLines.push(line);
+    }
+    
+    // Рисуем верхнюю границу (потолок) - красным
+    for (let i = 0; i < pointsTop.length - 1; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsTop[i], pointsTop[i+1]]);
+      const material = new THREE.LineBasicMaterial({ color: 0xff4444, linewidth: 2 });
+      const line = new THREE.Line(geometry, material);
+      this.sceneManager.scene.add(line);
+      this.boundsLines.push(line);
+    }
+    
+    // Вертикальные линии - жёлтым
+    for (let i = 0; i < 4; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsBottom[i], pointsTop[i]]);
+      const material = new THREE.LineBasicMaterial({ color: 0xffaa44 });
+      const line = new THREE.Line(geometry, material);
+      this.sceneManager.scene.add(line);
+      this.boundsLines.push(line);
+    }
+    
+    console.log(`Границы подъема: пол (${minY}), потолок (${maxY.toFixed(0)})`);
+  },
+  
+  // Обновить позицию границ при движении модели
+  updateBoundsLinesPosition: function() {
+    if (!this.isElevatorMode || !this.selectedObject || this.boundsLines.length === 0) return;
+    
+    const box = new THREE.Box3().setFromObject(this.selectedObject);
+    const size = box.getSize(new THREE.Vector3());
+    const modelHeight = size.y;
+    const centerX = this.selectedObject.position.x;
+    const centerZ = this.selectedObject.position.z;
+    
+    const floorLevel = this.sceneManager.floorLevel;
+    const ceilingLevel = this.sceneManager.roomH;
+    
+    const minY = floorLevel;
+    const maxY = ceilingLevel - modelHeight;
+    
+    // Обновляем позиции линий
+    const pointsBottom = [
+      new THREE.Vector3(centerX - 40, minY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, minY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, minY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, minY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, minY, centerZ - 40)
+    ];
+    
+    const pointsTop = [
+      new THREE.Vector3(centerX - 40, maxY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, maxY, centerZ - 40),
+      new THREE.Vector3(centerX + 40, maxY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, maxY, centerZ + 40),
+      new THREE.Vector3(centerX - 40, maxY, centerZ - 40)
+    ];
+    
+    // Обновляем нижние линии (индексы 0-3)
+    for (let i = 0; i < 4 && i < this.boundsLines.length; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsBottom[i], pointsBottom[i+1]]);
+      if (this.boundsLines[i].geometry) this.boundsLines[i].geometry.dispose();
+      this.boundsLines[i].geometry = geometry;
+    }
+    
+    // Обновляем верхние линии (индексы 4-7)
+    const topStartIndex = 4;
+    for (let i = 0; i < 4 && (topStartIndex + i) < this.boundsLines.length; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsTop[i], pointsTop[i+1]]);
+      if (this.boundsLines[topStartIndex + i].geometry) this.boundsLines[topStartIndex + i].geometry.dispose();
+      this.boundsLines[topStartIndex + i].geometry = geometry;
+    }
+    
+    // Обновляем вертикальные линии (индексы 8-11)
+    const vertStartIndex = 8;
+    for (let i = 0; i < 4 && (vertStartIndex + i) < this.boundsLines.length; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([pointsBottom[i], pointsTop[i]]);
+      if (this.boundsLines[vertStartIndex + i].geometry) this.boundsLines[vertStartIndex + i].geometry.dispose();
+      this.boundsLines[vertStartIndex + i].geometry = geometry;
+    }
+  },
+  
+  // Скрыть границы подъема
+  hideElevationBounds: function() {
+    if (this.boundsLines) {
+      this.boundsLines.forEach(line => {
+        if (line.parent) this.sceneManager.scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+      });
+      this.boundsLines = [];
+    }
+  },
+  
   enableElevatorMode: function() {
     if (!this.selectedObject) {
       if (this.uiManager) this.uiManager.showNotification('Сначала выберите объект', 'warning');
@@ -170,9 +390,22 @@ const SelectionManager = {
     } else {
       this.isElevatorMode = true;
       this.showElevatorArrow();
+      if (this.showBoundsVisual) {
+        this.showElevationBounds();
+      }
       ContextMenu.hide();
+      
+      // Показываем информацию о текущей высоте
+      const currentY = this.selectedObject.position.y;
+      const box = new THREE.Box3().setFromObject(this.selectedObject);
+      const modelTop = currentY + (box.getSize(new THREE.Vector3()).y / 2);
+      
       if (this.uiManager) {
-        this.uiManager.showNotification('Режим подъема включен. Тяните за стрелку вверх', 'info', 2000);
+        this.uiManager.showNotification(
+          `Режим подъема включен. Шаг: ${this.elevatorStep} ед.\nТекущая высота: ${currentY.toFixed(0)} ед. (верх: ${modelTop.toFixed(0)} ед.)`, 
+          'info', 
+          3000
+        );
       }
     }
   },
@@ -180,6 +413,7 @@ const SelectionManager = {
   disableElevatorMode: function() {
     this.isElevatorMode = false;
     this.hideElevatorArrow();
+    this.hideElevationBounds();
   },
   
   showElevatorArrow: function() {
@@ -241,21 +475,17 @@ const SelectionManager = {
         window.app.rotationManager.hideRotationCircle();
       }
       this.disableWidthMode();
-      // НЕ сбрасываем selectedObject сразу, чтобы сохранить высоту
       this.selectedObject = null;
       ContextMenu.hide();
     }
   },
 
-  // ОТКЛЮЧАЕМ АВТОМАТИЧЕСКОЕ ВЫРАВНИВАНИЕ ПО ПОЛУ ПРИ ВЫДЕЛЕНИИ
-  // Этот метод больше не вызывается автоматически при выделении
   alignToFloor: function(force = false) {
     if (!this.selectedObject) {
       if (this.uiManager) this.uiManager.showNotification('Сначала выберите объект', 'warning');
       return;
     }
     
-    // Если объект был поднят вручную и не force - не трогаем
     if (this.manuallyElevated && !force) {
       if (this.uiManager) {
         this.uiManager.showNotification('Объект был поднят вручную. Используйте "Сбросить на пол" для выравнивания', 'info', 2000);
@@ -286,7 +516,6 @@ const SelectionManager = {
     }
   },
   
-  // Принудительный сброс на пол (для кнопки)
   resetToFloor: function() {
     if (!this.selectedObject) return;
     
@@ -302,7 +531,12 @@ const SelectionManager = {
     }
     
     this.updateGearIconPosition();
-    if (this.isElevatorMode) this.updateElevatorArrowPosition();
+    if (this.isElevatorMode) {
+      this.updateElevatorArrowPosition();
+      if (this.showBoundsVisual) {
+        this.updateBoundsLinesPosition();
+      }
+    }
     if (this.isSizeLinesVisible) this.updateSizeLinesPosition();
     
     if (this.uiManager) {
@@ -310,7 +544,6 @@ const SelectionManager = {
     }
   },
 
-  // АВТОМАТИЧЕСКАЯ СТЫКОВКА ПРИ ПЕРЕТАСКИВАНИИ (к другим моделям И К СТЕНАМ)
   checkAndSnapToNearby: function(position) {
     if (!this.selectedObject) return position;
     
@@ -321,7 +554,6 @@ const SelectionManager = {
     let bestDistance = this.snapDistance;
     let snapType = null;
     
-    // ========== 1. СТЫКОВКА К ДРУГИМ МОДЕЛЯМ ==========
     for (let i = 0; i < this.sceneManager.objects.length; i++) {
       const other = this.sceneManager.objects[i];
       if (other === this.selectedObject) continue;
@@ -329,7 +561,6 @@ const SelectionManager = {
       const otherHalfSize = other.userData.combinedHalfSize || other.userData.halfSize;
       if (!otherHalfSize) continue;
       
-      // Стыковка по X (слева/справа)
       const snapRightX = other.position.x + otherHalfSize.x + sourceHalfSize.x;
       const snapLeftX = other.position.x - otherHalfSize.x - sourceHalfSize.x;
       const currentZ = position.z;
@@ -352,7 +583,6 @@ const SelectionManager = {
         }
       }
       
-      // Стыковка по Z (спереди/сзади)
       const snapFrontZ = other.position.z + otherHalfSize.z + sourceHalfSize.z;
       const snapBackZ = other.position.z - otherHalfSize.z - sourceHalfSize.z;
       const currentX = position.x;
@@ -376,12 +606,10 @@ const SelectionManager = {
       }
     }
     
-    // ========== 2. СТЫКОВКА К СТЕНАМ (ВПЛОТНУЮ) ==========
     const roomW = this.sceneManager.roomW;
     const roomD = this.sceneManager.roomD;
-    const WALL_GAP = 0; // ВПЛОТНУЮ к стене (без зазора)
+    const WALL_GAP = 0;
     
-    // Левая стена (X = -roomW/2)
     const leftWallX = -roomW/2 + sourceHalfSize.x + WALL_GAP;
     const distToLeftWall = Math.abs(position.x - leftWallX);
     if (distToLeftWall < bestDistance) {
@@ -390,7 +618,6 @@ const SelectionManager = {
       snapType = 'wall_left';
     }
     
-    // Правая стена (X = roomW/2)
     const rightWallX = roomW/2 - sourceHalfSize.x - WALL_GAP;
     const distToRightWall = Math.abs(position.x - rightWallX);
     if (distToRightWall < bestDistance) {
@@ -399,7 +626,6 @@ const SelectionManager = {
       snapType = 'wall_right';
     }
     
-    // Задняя стена (Z = -roomD/2)
     const backWallZ = -roomD/2 + sourceHalfSize.z + WALL_GAP;
     const distToBackWall = Math.abs(position.z - backWallZ);
     if (distToBackWall < bestDistance) {
@@ -408,7 +634,6 @@ const SelectionManager = {
       snapType = 'wall_back';
     }
     
-    // Передняя стена (Z = roomD/2)
     const frontWallZ = roomD/2 - sourceHalfSize.z - WALL_GAP;
     const distToFrontWall = Math.abs(position.z - frontWallZ);
     if (distToFrontWall < bestDistance) {
@@ -417,9 +642,7 @@ const SelectionManager = {
       snapType = 'wall_front';
     }
     
-    // ========== 3. ПРИМЕНЯЕМ СТЫКОВКУ ==========
     if (bestSnap) {
-      // Показываем уведомление при стыковке к стене
       if (snapType && snapType.startsWith('wall') && bestDistance < 10) {
         if (this.uiManager && !this.lastWallSnapNotified) {
           this.lastWallSnapNotified = true;
@@ -832,7 +1055,6 @@ const SelectionManager = {
       });
     }
     
-    // Обработчики для кнопок
     document.querySelectorAll('.width-preset').forEach(btn => {
       btn.onclick = () => this.setWidthPercentage(parseInt(btn.dataset.width));
     });
@@ -897,7 +1119,6 @@ const SelectionManager = {
     const clone = this.selectedObject.clone();
     clone.position.x += 50;
     
-    // Сохраняем высоту для клона
     if (this.selectedObject.userData.customHeight) {
       clone.userData.customHeight = this.selectedObject.userData.customHeight;
       clone.position.y = this.selectedObject.userData.customHeight;
